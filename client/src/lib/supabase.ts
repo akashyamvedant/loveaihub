@@ -105,4 +105,30 @@ export const authApi = {
 
     return response.json();
   },
+
+  async signInWithGoogle() {
+    const response = await fetch('/api/auth/google', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        redirectUrl: window.location.origin 
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Google sign in failed');
+    }
+
+    const data = await response.json();
+    
+    // Redirect to Google OAuth URL
+    if (data.url) {
+      window.location.href = data.url;
+    }
+    
+    return data;
+  },
 };

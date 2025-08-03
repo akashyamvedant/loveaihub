@@ -115,3 +115,19 @@ export function useResetPassword() {
     },
   });
 }
+
+export function useGoogleSignIn() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => authApi.signInWithGoogle(),
+    onError: (error) => {
+      toast({
+        title: "Google Sign In Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+}

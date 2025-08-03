@@ -285,6 +285,79 @@ export async function setupAuth(app: Express) {
       res.status(500).json({ message: "Internal server error" });
     }
   });
+
+  // Google OAuth login endpoint
+  app.post("/api/auth/google", async (req, res) => {
+    try {
+      const { redirectUrl } = req.body;
+      const baseUrl = redirectUrl || `${req.protocol}://${req.get('host')}`;
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${baseUrl}/auth/callback`,
+        }
+      });
+
+      if (error) {
+        return res.status(400).json({ message: error.message });
+      }
+
+      res.json({ url: data.url });
+    } catch (error) {
+      console.error("Google OAuth error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // OAuth callback endpoint
+  app.get("/auth/callback", async (req, res) => {
+    try {
+      const { code, error: oauthError } = req.query;
+
+      if (oauthError) {
+        return res.redirect(`/?error=${encodeURIComponent(oauthError.toString())}`);
+      }
+
+      if (!code) {
+        return res.redirect("/?error=missing_code");
+      }
+
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code.toString());
+
+      if (error) {
+        console.error("OAuth callback error:", error);
+        return res.redirect(`/?error=${encodeURIComponent(error.message)}`);
+      }
+
+      if (data.user && data.session) {
+        // Create/update user in our database
+        await storage.upsertUser({
+          id: data.user.id,
+          email: data.user.email!,
+          firstName: data.user.user_metadata?.full_name?.split(' ')[0] || data.user.user_metadata?.first_name,
+          lastName: data.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || data.user.user_metadata?.last_name,
+          profileImageUrl: data.user.user_metadata?.avatar_url,
+        });
+
+        // Store user session
+        (req.session as any).user = {
+          id: data.user.id,
+          email: data.user.email,
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        };
+
+        // Redirect to dashboard or homepage
+        res.redirect("/");
+      } else {
+        res.redirect("/?error=oauth_failed");
+      }
+    } catch (error) {
+      console.error("OAuth callback error:", error);
+      res.redirect("/?error=server_error");
+    }
+  });
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
