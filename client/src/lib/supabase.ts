@@ -107,28 +107,49 @@ export const authApi = {
   },
 
   async signInWithGoogle() {
-    const response = await fetch('/api/auth/google', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        redirectUrl: window.location.origin 
-      }),
-    });
+    try {
+      const response = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          redirectUrl: window.location.origin 
+        }),
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Google sign in failed');
-    }
+      if (!response.ok) {
+        // Try to parse as JSON, fallback to text if it fails
+        let errorMessage = 'Google sign in failed';
+        try {
+          const error = await response.json();
+          errorMessage = error.message || errorMessage;
+        } catch (jsonError) {
+          const textError = await response.text();
+          console.error('Non-JSON error response:', textError);
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
 
-    const data = await response.json();
-    
-    // Redirect to Google OAuth URL
-    if (data.url) {
-      window.location.href = data.url;
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        const textResponse = await response.text();
+        console.error('Failed to parse JSON response:', textResponse);
+        throw new Error('Invalid server response format');
+      }
+      
+      // Redirect to Google OAuth URL
+      if (data.url) {
+        window.location.href = data.url;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Google OAuth error:', error);
+      throw error;
     }
-    
-    return data;
   },
 };

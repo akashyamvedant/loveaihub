@@ -289,8 +289,11 @@ export async function setupAuth(app: Express) {
   // Google OAuth login endpoint
   app.post("/api/auth/google", async (req, res) => {
     try {
+      console.log("Google OAuth request received:", req.body);
       const { redirectUrl } = req.body;
       const baseUrl = redirectUrl || `${req.protocol}://${req.get('host')}`;
+      
+      console.log("Attempting OAuth with redirect to:", `${baseUrl}/auth/callback`);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -300,9 +303,11 @@ export async function setupAuth(app: Express) {
       });
 
       if (error) {
+        console.error("Supabase OAuth error:", error);
         return res.status(400).json({ message: error.message });
       }
 
+      console.log("OAuth URL generated:", data.url);
       res.json({ url: data.url });
     } catch (error) {
       console.error("Google OAuth error:", error);
