@@ -4,47 +4,91 @@ import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
-// Supabase configuration
-if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
-  throw new Error("SUPABASE_URL and SUPABASE_ANON_KEY environment variables are required");
+// Supabase configuration with graceful fallbacks for serverless
+let supabase: any = null;
+
+function initializeSupabase() {
+  if (!supabase && process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
+    try {
+      supabase = createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_ANON_KEY
+      );
+    } catch (error) {
+      console.error("Failed to initialize Supabase:", error);
+    }
+  }
+  return supabase;
 }
 
-export const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
+export { supabase };
+export { initializeSupabase };
 
 export function getSession() {
-  const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
-  const pgStore = connectPg(session);
-  const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
-    ttl: sessionTtl,
-    tableName: "sessions",
-  });
-  
-  // Use environment variable or fallback to a generated secret for development
-  const sessionSecret = process.env.SESSION_SECRET || "8788fdfd5215934707e38407bcb2920b2aa6716b60801fec6ab1ff6ed34cf6d7";
-  
-  return session({
-    secret: sessionSecret,
-    store: sessionStore,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: sessionTtl,
-    },
-  });
+  try {
+    const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
+    
+    // Only create PG store if DATABASE_URL is available
+    if (!process.env.DATABASE_URL) {
+      console.warn("DATABASE_URL not available, using memory store");
+      const MemoryStore = session.MemoryStore;
+      return session({
+        secret: process.env.SESSION_SECRET || "8788fdfd5215934707e38407bcb2920b2aa6716b60801fec6ab1ff6ed34cf6d7",
+        store: new MemoryStore(),
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          maxAge: sessionTtl,
+        },
+      });
+    }
+    
+    const pgStore = connectPg(session);
+    const sessionStore = new pgStore({
+      conString: process.env.DATABASE_URL,
+      createTableIfMissing: false,
+      ttl: sessionTtl,
+      tableName: "sessions",
+    });
+    
+    return session({
+      secret: process.env.SESSION_SECRET || "8788fdfd5215934707e38407bcb2920b2aa6716b60801fec6ab1ff6ed34cf6d7",
+      store: sessionStore,
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: sessionTtl,
+      },
+    });
+  } catch (error) {
+    console.error("Error creating session:", error);
+    // Fallback to memory store
+    return session({
+      secret: process.env.SESSION_SECRET || "8788fdfd5215934707e38407bcb2920b2aa6716b60801fec6ab1ff6ed34cf6d7",
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      },
+    });
+  }
 }
 
 export async function setupAuth(app: Express) {
-  app.set("trust proxy", 1);
-  app.use(getSession());
+  try {
+    app.set("trust proxy", 1);
+    app.use(getSession());
+    
+    // Initialize Supabase
+    initializeSupabase();
 
-  // Sign up endpoint
+    // Sign up endpoint
   app.post("/api/auth/signup", async (req, res) => {
     try {
       const { email, password, firstName, lastName } = req.body;
@@ -53,7 +97,12 @@ export async function setupAuth(app: Express) {
         return res.status(400).json({ message: "Email and password are required" });
       }
 
-      const { data, error } = await supabase.auth.signUp({
+      const supabaseClient = initializeSupabase();
+      if (!supabaseClient) {
+        return res.status(500).json({ message: "Authentication service unavailable" });
+      }
+
+      const { data, error } = await supabaseClient.auth.signUp({
         email,
         password,
         options: {
@@ -107,7 +156,12 @@ export async function setupAuth(app: Express) {
         return res.status(400).json({ message: "Email and password are required" });
       }
 
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const supabaseClient = initializeSupabase();
+      if (!supabaseClient) {
+        return res.status(500).json({ message: "Authentication service unavailable" });
+      }
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
         email,
         password,
       });
@@ -231,7 +285,12 @@ export async function setupAuth(app: Express) {
         return res.status(400).json({ message: "Email is required" });
       }
 
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const supabaseClient = initializeSupabase();
+      if (!supabaseClient) {
+        return res.status(500).json({ message: "Authentication service unavailable" });
+      }
+
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
         redirectTo: `${req.protocol}://${req.get('host')}/reset-password`,
       });
 
@@ -315,7 +374,12 @@ export async function setupAuth(app: Express) {
       
       try {
         // Check if Google OAuth is configured in Supabase
-        const { data, error } = await supabase.auth.signInWithOAuth({
+        const supabaseClient = initializeSupabase();
+        if (!supabaseClient) {
+          return res.status(500).json({ message: "Authentication service unavailable" });
+        }
+
+        const { data, error } = await supabaseClient.auth.signInWithOAuth({
           provider: 'google',
           options: {
             redirectTo: `${baseUrl}/auth/callback`,
@@ -380,7 +444,12 @@ export async function setupAuth(app: Express) {
         return res.redirect("/?error=missing_code");
       }
 
-      const { data, error } = await supabase.auth.exchangeCodeForSession(code.toString());
+      const supabaseClient = initializeSupabase();
+      if (!supabaseClient) {
+        return res.redirect("/?error=authentication_unavailable");
+      }
+
+      const { data, error } = await supabaseClient.auth.exchangeCodeForSession(code.toString());
 
       if (error) {
         console.error("OAuth callback error:", error);
@@ -415,6 +484,10 @@ export async function setupAuth(app: Express) {
       res.redirect("/?error=server_error");
     }
   });
+  
+  } catch (error) {
+    console.error('Error setting up authentication routes:', error);
+  }
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
