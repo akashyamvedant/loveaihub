@@ -293,43 +293,77 @@ export async function setupAuth(app: Express) {
       
       // Set proper headers for JSON response
       res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
       
       const { redirectUrl } = req.body;
       const baseUrl = redirectUrl || `${req.protocol}://${req.get('host')}`;
       
       console.log("Attempting OAuth with redirect to:", `${baseUrl}/auth/callback`);
       
-      // Check if Google OAuth is configured in Supabase
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${baseUrl}/auth/callback`,
+      // First check if Supabase credentials are properly configured
+      if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+        console.error("Missing Supabase credentials", {
+          hasUrl: !!process.env.SUPABASE_URL,
+          hasKey: !!process.env.SUPABASE_ANON_KEY
+        });
+        return res.status(500).json({ 
+          message: "Server configuration error: Missing Supabase credentials" 
+        });
+      }
+      
+      try {
+        // Check if Google OAuth is configured in Supabase
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${baseUrl}/auth/callback`,
+          }
+        });
+
+        if (error) {
+          console.error("Supabase OAuth error:", error);
+          
+          // More specific error handling
+          if (error.message.toLowerCase().includes('provider') || 
+              error.message.toLowerCase().includes('not configured') ||
+              error.message.toLowerCase().includes('disabled')) {
+            return res.status(400).json({ 
+              message: "Google OAuth is not configured in Supabase. Please enable Google OAuth provider in your Supabase dashboard under Authentication > Providers."
+            });
+          }
+          
+          if (error.message.toLowerCase().includes('invalid') ||
+              error.message.toLowerCase().includes('client')) {
+            return res.status(400).json({ 
+              message: "Google OAuth configuration is invalid. Please check your Google Client ID and Secret in Supabase dashboard."
+            });
+          }
+          
+          return res.status(400).json({ message: `OAuth error: ${error.message}` });
         }
+
+        if (!data || !data.url) {
+          console.error("No OAuth URL generated, data:", data);
+          return res.status(500).json({ message: "Failed to generate OAuth URL - Google provider may not be enabled" });
+        }
+
+        console.log("OAuth URL generated successfully:", data.url);
+        return res.json({ url: data.url, success: true });
+        
+      } catch (supabaseError: any) {
+        console.error("Supabase API error:", supabaseError);
+        return res.status(500).json({ 
+          message: `Supabase API error: ${supabaseError.message || 'Unknown error'}` 
+        });
+      }
+      
+    } catch (error: any) {
+      console.error("Google OAuth endpoint error:", error);
+      return res.status(500).json({ 
+        message: `Server error: ${error.message || 'Internal server error'}` 
       });
-
-      if (error) {
-        console.error("Supabase OAuth error:", error);
-        
-        // Check if it's a configuration error
-        if (error.message.includes('provider') || error.message.includes('not configured')) {
-          return res.status(400).json({ 
-            message: "Google OAuth is not configured in Supabase. Please configure Google OAuth provider in your Supabase dashboard."
-          });
-        }
-        
-        return res.status(400).json({ message: error.message });
-      }
-
-      if (!data.url) {
-        console.error("No OAuth URL generated");
-        return res.status(500).json({ message: "Failed to generate OAuth URL" });
-      }
-
-      console.log("OAuth URL generated:", data.url);
-      res.json({ url: data.url });
-    } catch (error) {
-      console.error("Google OAuth error:", error);
-      res.status(500).json({ message: "Internal server error" });
     }
   });
 

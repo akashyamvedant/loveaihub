@@ -121,13 +121,31 @@ export function useGoogleSignIn() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => authApi.signInWithGoogle(),
-    onError: (error) => {
-      toast({
-        title: "Google Sign In Failed",
-        description: error.message,
-        variant: "destructive",
-      });
+    mutationFn: async () => {
+      try {
+        const result = await authApi.signInWithGoogle();
+        return result;
+      } catch (error: any) {
+        console.error('Google Sign In Error:', error);
+        
+        // Show a more specific error message
+        let errorMessage = 'Google sign in failed';
+        if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        toast({
+          title: "Google Sign In Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        
+        throw error;
+      }
+    },
+    onError: (error: any) => {
+      console.error('Google OAuth mutation error:', error);
+      // Error is already handled in mutationFn, so we don't need to show another toast
     },
   });
 }
