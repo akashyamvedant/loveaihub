@@ -9,37 +9,75 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // Auth API helpers that communicate with our backend
 export const authApi = {
   async signUp(email: string, password: string, firstName?: string, lastName?: string) {
-    const response = await fetch('/api/auth/signup', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password, firstName, lastName }),
-    });
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password, firstName, lastName }),
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Sign up failed');
+      const responseClone = response.clone();
+
+      if (!response.ok) {
+        let errorMessage = 'Sign up failed';
+        try {
+          const error = await response.json();
+          errorMessage = error.message || errorMessage;
+        } catch (jsonError) {
+          try {
+            const textError = await responseClone.text();
+            console.error('Non-JSON error response:', textError);
+            errorMessage = `Server error: ${response.status} ${response.statusText}`;
+          } catch (textError) {
+            errorMessage = `Server error: ${response.status} ${response.statusText}`;
+          }
+        }
+        throw new Error(errorMessage);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Sign up error:', error);
+      throw error;
     }
-
-    return response.json();
   },
 
   async signIn(email: string, password: string) {
-    const response = await fetch('/api/auth/signin', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const response = await fetch('/api/auth/signin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Sign in failed');
+      const responseClone = response.clone();
+
+      if (!response.ok) {
+        let errorMessage = 'Sign in failed';
+        try {
+          const error = await response.json();
+          errorMessage = error.message || errorMessage;
+        } catch (jsonError) {
+          try {
+            const textError = await responseClone.text();
+            console.error('Non-JSON error response:', textError);
+            errorMessage = `Server error: ${response.status} ${response.statusText}`;
+          } catch (textError) {
+            errorMessage = `Server error: ${response.status} ${response.statusText}`;
+          }
+        }
+        throw new Error(errorMessage);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Sign in error:', error);
+      throw error;
     }
-
-    return response.json();
   },
 
   async signOut() {
@@ -118,28 +156,27 @@ export const authApi = {
         }),
       });
 
+      // Clone the response to avoid "body stream already read" error
+      const responseClone = response.clone();
+
       if (!response.ok) {
-        // Try to parse as JSON, fallback to text if it fails
         let errorMessage = 'Google sign in failed';
         try {
           const error = await response.json();
           errorMessage = error.message || errorMessage;
         } catch (jsonError) {
-          const textError = await response.text();
-          console.error('Non-JSON error response:', textError);
-          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+          try {
+            const textError = await responseClone.text();
+            console.error('Non-JSON error response:', textError);
+            errorMessage = `Server error: ${response.status} ${response.statusText}`;
+          } catch (textError) {
+            errorMessage = `Server error: ${response.status} ${response.statusText}`;
+          }
         }
         throw new Error(errorMessage);
       }
 
-      let data;
-      try {
-        data = await response.json();
-      } catch (jsonError) {
-        const textResponse = await response.text();
-        console.error('Failed to parse JSON response:', textResponse);
-        throw new Error('Invalid server response format');
-      }
+      const data = await response.json();
       
       // Redirect to Google OAuth URL
       if (data.url) {
