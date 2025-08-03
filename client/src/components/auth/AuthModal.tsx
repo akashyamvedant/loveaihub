@@ -17,8 +17,12 @@ export function AuthModal({ isOpen, onClose, defaultTab = "signin" }: AuthModalP
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] border-0 bg-transparent p-0 shadow-none">
+      <DialogContent className="sm:max-w-[500px] border-0 bg-transparent p-0 shadow-none" aria-describedby="auth-description">
         <DialogTitle className="sr-only">Authentication</DialogTitle>
+        <div id="auth-description" className="sr-only">Sign in or create an account for LoveAIHub</div>
+        
+        {/* Background glow effect */}
+        <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-purple-600/20 blur-xl scale-110"></div>
         
         {/* Main container with purple gradient border */}
         <div className="relative">
@@ -135,7 +139,7 @@ function SignInForm({ onForgotPassword, onSignUpClick, onSuccess }: {
 
         <Button 
           type="submit" 
-          className="w-full h-14 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold text-lg rounded-xl" 
+          className="w-full h-14 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold text-lg rounded-xl shadow-lg shadow-purple-500/25" 
           disabled={signIn.isPending}
         >
           {signIn.isPending && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
@@ -299,7 +303,7 @@ function SignUpForm({ onSignInClick, onSuccess }: { onSignInClick: () => void; o
 
         <Button 
           type="submit" 
-          className="w-full h-14 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold text-lg rounded-xl" 
+          className="w-full h-14 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold text-lg rounded-xl shadow-lg shadow-purple-500/25" 
           disabled={signUp.isPending}
         >
           {signUp.isPending && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
@@ -397,7 +401,7 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
         <Button 
           type="submit" 
           disabled={resetPassword.isPending} 
-          className="w-full h-14 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold text-lg rounded-xl"
+          className="w-full h-14 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold text-lg rounded-xl shadow-lg shadow-purple-500/25"
         >
           {resetPassword.isPending && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
           Send Reset Link
