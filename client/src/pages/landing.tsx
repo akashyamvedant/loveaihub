@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/footer";
+import { AuthModal } from "@/components/auth/AuthModal";
 import { 
   Sparkles, 
   Image, 
@@ -23,6 +24,8 @@ import {
 
 export default function Landing() {
   const [mounted, setMounted] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState<"signin" | "signup">("signup");
 
   useEffect(() => {
     setMounted(true);
@@ -67,7 +70,10 @@ export default function Landing() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
               <Button 
                 className="btn-primary text-lg px-8 py-4 animate-glow"
-                onClick={() => (window.location.href = "/api/login")}
+                onClick={() => {
+                  setAuthModalTab("signup");
+                  setShowAuthModal(true);
+                }}
               >
                 Start Creating Free
               </Button>
@@ -445,7 +451,10 @@ export default function Landing() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button 
                   className="btn-primary text-lg px-8 py-4"
-                  onClick={() => (window.location.href = "/api/login")}
+                  onClick={() => {
+                    setAuthModalTab("signup");
+                    setShowAuthModal(true);
+                  }}
                 >
                   Start Creating Free
                 </Button>
@@ -467,6 +476,12 @@ export default function Landing() {
       </section>
 
       <Footer />
+      
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        defaultTab={authModalTab}
+      />
     </div>
   );
 }
