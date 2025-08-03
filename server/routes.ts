@@ -192,7 +192,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           model,
           prompt: messages[messages.length - 1]?.content || "",
           metadata: { messages, options },
-          result,
         });
 
         res.json(result);
@@ -233,7 +232,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (error) {
         await storage.updateGeneration(generation.id, {
           status: "failed",
-          result: { error: error.message },
+          result: { error: error instanceof Error ? error.message : String(error) },
         });
         throw error;
       }
@@ -279,7 +278,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (error) {
         await storage.updateGeneration(generation.id, {
           status: "failed",
-          result: { error: error.message },
+          result: { error: error instanceof Error ? error.message : String(error) },
         });
         throw error;
       }
@@ -334,7 +333,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (error) {
         await storage.updateGeneration(generation.id, {
           status: "failed",
-          result: { error: error.message },
+          result: { error: error instanceof Error ? error.message : String(error) },
         });
         throw error;
       }

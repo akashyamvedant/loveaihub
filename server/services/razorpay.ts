@@ -14,14 +14,13 @@ export class RazorpayService {
     try {
       const subscription = await this.razorpay.subscriptions.create({
         plan_id: planId,
-        customer_id: customerId,
         quantity: 1,
         total_count: 12, // 12 months
         addons: [],
         notes: {
           service: "LoveAIHub Premium",
         },
-      });
+      } as any);
 
       return subscription;
     } catch (error) {
@@ -87,7 +86,7 @@ export class RazorpayService {
     }
   }
 
-  async verifyWebhookSignature(payload: string, signature: string, secret: string): boolean {
+  async verifyWebhookSignature(payload: string, signature: string, secret: string): Promise<boolean> {
     try {
       const crypto = require("crypto");
       const expectedSignature = crypto
