@@ -95,3 +95,5 @@ The database schema supports multi-tenant usage tracking, generation history, an
   - Created OAuth callback endpoint for handling Google authentication flow
   - Fixed authentication API endpoints for production environment
   - Authentication modal fully functional with loading states and error handling
+  - **Current Issue**: Production deployment needs environment variables configured in Vercel dashboard
+  - **Database**: Using Supabase PostgreSQL database (postgresql://postgres.gfrpidhedgqixkgafumc:[AKraj@$5630]@aws-0-ap-south-1.pooler.supabase.com:6543/postgres)
