@@ -37,7 +37,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check generation limits
-      if (user.subscriptionType === "free" && user.generationsUsed >= user.generationsLimit) {
+      const generationsUsed = user.generationsUsed ?? 0;
+      const generationsLimit = user.generationsLimit ?? 50;
+      if (user.subscriptionType === "free" && generationsUsed >= generationsLimit) {
         return res.status(403).json({ message: "Generation limit exceeded. Please upgrade to premium." });
       }
 
@@ -74,17 +76,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Update user's generation count
         if (user.subscriptionType === "free") {
-          await storage.upsertUser({
-            ...user,
-            generationsUsed: user.generationsUsed + 1,
-          });
+          await storage.updateUserGenerationsUsed(userId, generationsUsed + 1);
         }
 
         res.json({ generation: { ...generation, result, status: "completed" } });
       } catch (error) {
         await storage.updateGeneration(generation.id, {
           status: "failed",
-          result: { error: error.message },
+          result: { error: error instanceof Error ? error.message : String(error) },
         });
         throw error;
       }
@@ -104,7 +103,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      if (user.subscriptionType === "free" && user.generationsUsed >= user.generationsLimit) {
+      const videoGenerationsUsed = user.generationsUsed ?? 0;
+      const videoGenerationsLimit = user.generationsLimit ?? 50;
+      if (user.subscriptionType === "free" && videoGenerationsUsed >= videoGenerationsLimit) {
         return res.status(403).json({ message: "Generation limit exceeded. Please upgrade to premium." });
       }
 
@@ -131,17 +132,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
         if (user.subscriptionType === "free") {
-          await storage.upsertUser({
-            ...user,
-            generationsUsed: user.generationsUsed + 1,
-          });
+          await storage.updateUserGenerationsUsed(userId, videoGenerationsUsed + 1);
         }
 
         res.json({ generation: { ...generation, result, status: "completed" } });
       } catch (error) {
         await storage.updateGeneration(generation.id, {
           status: "failed",
-          result: { error: error.message },
+          result: { error: error instanceof Error ? error.message : String(error) },
         });
         throw error;
       }
@@ -177,7 +175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           res.write('data: [DONE]\n\n');
           res.end();
         } catch (error) {
-          res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+          res.write(`data: ${JSON.stringify({ error: error instanceof Error ? error.message : String(error) })}\n\n`);
           res.end();
         }
       } else {
@@ -194,7 +192,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           model,
           prompt: messages[messages.length - 1]?.content || "",
           metadata: { messages, options },
-          status: "completed",
           result,
         });
 

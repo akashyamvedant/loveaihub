@@ -182,7 +182,7 @@
 
 /* AdSense optimized layouts */
 .ad-container {
-  @apply min-h-[250px] flex items-center justify-center bg-muted/20 rounded-lg border border-border;
+  @apply min-h-[250px] flex items-center justify-center bg-gray-100/20 dark:bg-gray-800/20 rounded-lg border border-border;
 }
 
 .ad-container::before {

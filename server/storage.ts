@@ -18,7 +18,8 @@ import { eq, desc, and, sql } from "drizzle-orm";
 export interface IStorage {
   // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
+  upsertUser(user: UpsertUser & { id?: string }): Promise<User>;
+  updateUserGenerationsUsed(userId: string, used: number): Promise<void>;
   
   // Generation operations
   createGeneration(generation: InsertGeneration & { userId: string }): Promise<Generation>;
@@ -51,12 +52,12 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
+  async upsertUser(userData: UpsertUser & { id?: string }): Promise<User> {
     const [user] = await db
       .insert(users)
       .values(userData)
       .onConflictDoUpdate({
-        target: users.id,
+        target: users.email,
         set: {
           ...userData,
           updatedAt: new Date(),
@@ -64,6 +65,13 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  async updateUserGenerationsUsed(userId: string, used: number): Promise<void> {
+    await db
+      .update(users)
+      .set({ generationsUsed: used, updatedAt: new Date() })
+      .where(eq(users.id, userId));
   }
 
   // Generation operations
