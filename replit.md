@@ -5,6 +5,7 @@ LoveAIHub is a comprehensive AI platform that provides access to multiple AI mod
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
+Deployment approach: Iterative - start with core features and add credentials/services incrementally as new features are built.
 
 # System Architecture
 
