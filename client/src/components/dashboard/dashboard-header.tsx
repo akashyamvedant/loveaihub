@@ -41,16 +41,16 @@ export default function DashboardHeader({ title, description, children }: Dashbo
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           {/* User Greeting */}
-          <div className="flex-shrink-0">
-            <h1 className="text-xl font-semibold text-foreground">
+          <div className="flex-shrink-0 min-w-0">
+            <h1 className="text-lg sm:text-xl font-semibold text-foreground truncate">
               {title}
             </h1>
           </div>
           
           {/* Right Side - Search, Notification, Profile */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             {/* Search Bar */}
-            <div className="relative w-80 hidden md:block">
+            <div className="relative w-48 sm:w-64 lg:w-80 hidden sm:block">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder="Search tools, generations..."
@@ -70,8 +70,13 @@ export default function DashboardHeader({ title, description, children }: Dashbo
               )}
             </div>
 
+            {/* Mobile Search Button */}
+            <Button variant="ghost" size="sm" className="h-10 w-10 sm:hidden">
+              <Search className="w-5 h-5" />
+            </Button>
+
             {/* Notification Icon */}
-            <Button variant="ghost" size="sm" className="relative h-10 w-10">
+            <Button variant="ghost" size="sm" className="relative h-10 w-10 flex-shrink-0">
               <Bell className="w-5 h-5" />
               <span className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full text-[10px] flex items-center justify-center text-white font-bold">
                 3
@@ -81,7 +86,7 @@ export default function DashboardHeader({ title, description, children }: Dashbo
             {/* Profile Icon */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full flex-shrink-0">
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={(user as any)?.profileImageUrl} alt="Profile" />
                     <AvatarFallback className="bg-gradient-to-r from-primary to-purple-600 text-white">

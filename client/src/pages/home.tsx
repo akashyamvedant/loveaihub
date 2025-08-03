@@ -48,7 +48,6 @@ export default function Home() {
     <DashboardLayout>
       <DashboardHeader
         title={`${welcomeMessage()}, ${(user as any)?.firstName || 'User'}!`}
-        description="Welcome to your AI-powered creative workspace"
       >
         {(user as any)?.subscriptionType === "free" && (
           <Link href="/pricing">
