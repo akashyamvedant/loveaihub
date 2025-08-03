@@ -44,15 +44,25 @@ The database schema supports multi-tenant usage tracking, generation history, an
 
 ## Authentication and Authorization
 
-- **Authentication Provider**: Replit OpenID Connect for secure user authentication
-- **Session Management**: Server-side sessions with secure HTTP-only cookies
+- **Authentication Provider**: Supabase Auth for secure user authentication with email/password login
+- **Session Management**: Server-side sessions with secure HTTP-only cookies, integrated with Supabase tokens
 - **Authorization**: Role-based access control with admin privileges for platform management
 - **Security**: CSRF protection and secure session configuration with proper cookie settings
+- **Frontend Auth**: Custom authentication modal with sign up, sign in, and password reset functionality
 
 ## External Dependencies
 
 - **AI Services**: A4F.co API integration providing access to 20+ AI models including FLUX, DALL-E, GPT, Claude, and Gemini for various AI tasks
 - **Payment Processing**: Razorpay integration for subscription management and payment processing
-- **Database Hosting**: Neon PostgreSQL for cloud database services
-- **Authentication**: Replit Auth service for OpenID Connect authentication
+- **Database Hosting**: PostgreSQL database for scalable cloud database solution
+- **Authentication**: Supabase authentication service for user management and secure authentication
 - **Development Tools**: Replit-specific tooling for development environment integration
+
+## Recent Changes (December 2024)
+
+- **Migration to Supabase Auth**: Replaced Replit OpenID Connect with Supabase authentication
+  - Created custom authentication API endpoints (/api/auth/signup, /api/auth/signin, /api/auth/signout)
+  - Implemented AuthModal component with sign up, sign in, and password reset functionality
+  - Updated navigation component to use new authentication system
+  - Integrated Supabase client for frontend and backend authentication
+  - Updated all route handlers to use new authentication middleware

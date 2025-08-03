@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated } from "./supabaseAuth";
 import { a4fApi } from "./services/a4fApi";
 import { razorpayService } from "./services/razorpay";
 import { insertGenerationSchema, insertBlogPostSchema } from "@shared/schema";
@@ -14,22 +14,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
+  // Note: Auth routes are now handled in supabaseAuth.ts
 
   // Image Generation Routes
   app.post("/api/generate/image", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.currentUser.id;
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -96,7 +86,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Video Generation Routes
   app.post("/api/generate/video", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.currentUser.id;
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -152,7 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Chat Completion Routes
   app.post("/api/chat/completions", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.currentUser.id;
       const { model, messages, stream = false, ...options } = req.body;
 
       if (stream) {
@@ -205,7 +195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Audio Generation Routes
   app.post("/api/generate/audio", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.currentUser.id;
       const { model, input, ...options } = req.body;
 
       const generation = await storage.createGeneration({
@@ -245,7 +235,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Audio Transcription Routes
   app.post("/api/transcribe", isAuthenticated, upload.single('audio'), async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.currentUser.id;
       const { model, language, response_format } = req.body;
       const audioFile = req.file;
 
@@ -294,7 +284,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     { name: 'mask', maxCount: 1 }
   ]), async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.currentUser.id;
       const { model, prompt } = req.body;
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
@@ -346,7 +336,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generation History
   app.get("/api/generations", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.currentUser.id;
       const generations = await storage.getGenerationsByUser(userId);
       res.json(generations);
     } catch (error) {
@@ -385,7 +375,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin Routes
   app.get("/api/admin/users", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.currentUser.id;
       const user = await storage.getUser(userId);
       
       if (!user?.isAdmin) {
@@ -402,7 +392,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/stats", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.currentUser.id;
       const user = await storage.getUser(userId);
       
       if (!user?.isAdmin) {
@@ -419,7 +409,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/blog", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.currentUser.id;
       const user = await storage.getUser(userId);
       
       if (!user?.isAdmin) {
@@ -442,7 +432,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Subscription Routes
   app.post("/api/subscribe", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.currentUser.id;
       const user = await storage.getUser(userId);
       
       if (!user) {

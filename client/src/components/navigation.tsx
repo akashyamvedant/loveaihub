@@ -1,13 +1,23 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, useSignOut } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Sparkles } from "lucide-react";
+import { Menu, Sparkles, LogOut, User } from "lucide-react";
+import { AuthModal } from "@/components/auth/AuthModal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState<"signin" | "signup">("signin");
   const { isAuthenticated, user } = useAuth();
+  const signOut = useSignOut();
   const [location] = useLocation();
 
   useEffect(() => {
@@ -81,37 +91,46 @@ export default function Navigation() {
                     </Button>
                   </Link>
                 )}
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-purple-500 flex items-center justify-center">
-                    <span className="text-sm font-medium text-white">
-                      {user?.firstName?.charAt(0) || user?.email?.charAt(0) || "U"}
-                    </span>
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    {user?.firstName || "User"}
-                  </span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => (window.location.href = "/api/logout")}
-                >
-                  Sign Out
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="flex items-center space-x-2">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-purple-500 flex items-center justify-center">
+                        <span className="text-sm font-medium text-white">
+                          {user?.firstName?.charAt(0) || user?.email?.charAt(0) || "U"}
+                        </span>
+                      </div>
+                      <span className="text-sm">
+                        {user?.firstName || "User"}
+                      </span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => signOut.mutate()}>
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </>
             ) : (
               <>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => (window.location.href = "/api/login")}
+                  onClick={() => {
+                    setAuthModalTab("signin");
+                    setShowAuthModal(true);
+                  }}
                 >
                   Sign In
                 </Button>
                 <Button
                   className="btn-primary"
                   size="sm"
-                  onClick={() => (window.location.href = "/api/login")}
+                  onClick={() => {
+                    setAuthModalTab("signup");
+                    setShowAuthModal(true);
+                  }}
                 >
                   Start Free
                 </Button>
@@ -166,8 +185,9 @@ export default function Navigation() {
                         <Button
                           variant="ghost"
                           className="w-full justify-start"
-                          onClick={() => (window.location.href = "/api/logout")}
+                          onClick={() => signOut.mutate()}
                         >
+                          <LogOut className="w-4 h-4 mr-2" />
                           Sign Out
                         </Button>
                       </>
@@ -176,13 +196,19 @@ export default function Navigation() {
                         <Button
                           variant="ghost"
                           className="w-full justify-start"
-                          onClick={() => (window.location.href = "/api/login")}
+                          onClick={() => {
+                            setAuthModalTab("signin");
+                            setShowAuthModal(true);
+                          }}
                         >
                           Sign In
                         </Button>
                         <Button
                           className="btn-primary w-full"
-                          onClick={() => (window.location.href = "/api/login")}
+                          onClick={() => {
+                            setAuthModalTab("signup");
+                            setShowAuthModal(true);
+                          }}
                         >
                           Start Free
                         </Button>
@@ -195,6 +221,12 @@ export default function Navigation() {
           </div>
         </div>
       </div>
+      
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        defaultTab={authModalTab}
+      />
     </nav>
   );
 }

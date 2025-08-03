@@ -1,0 +1,325 @@
+import { createClient } from '@supabase/supabase-js';
+import type { Express, RequestHandler } from "express";
+import session from "express-session";
+import connectPg from "connect-pg-simple";
+import { storage } from "./storage";
+
+// Supabase configuration
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+  throw new Error("SUPABASE_URL and SUPABASE_ANON_KEY environment variables are required");
+}
+
+export const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
+
+export function getSession() {
+  const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
+  const pgStore = connectPg(session);
+  const sessionStore = new pgStore({
+    conString: process.env.DATABASE_URL,
+    createTableIfMissing: false,
+    ttl: sessionTtl,
+    tableName: "sessions",
+  });
+  
+  // Use environment variable or fallback to a generated secret for development
+  const sessionSecret = process.env.SESSION_SECRET || "8788fdfd5215934707e38407bcb2920b2aa6716b60801fec6ab1ff6ed34cf6d7";
+  
+  return session({
+    secret: sessionSecret,
+    store: sessionStore,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: sessionTtl,
+    },
+  });
+}
+
+export async function setupAuth(app: Express) {
+  app.set("trust proxy", 1);
+  app.use(getSession());
+
+  // Sign up endpoint
+  app.post("/api/auth/signup", async (req, res) => {
+    try {
+      const { email, password, firstName, lastName } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+          }
+        }
+      });
+
+      if (error) {
+        return res.status(400).json({ message: error.message });
+      }
+
+      if (data.user) {
+        // Create user in our database
+        await storage.upsertUser({
+          id: data.user.id,
+          email: data.user.email!,
+          firstName: firstName,
+          lastName: lastName,
+          profileImageUrl: data.user.user_metadata?.avatar_url,
+        });
+
+        // Store user session
+        (req.session as any).user = {
+          id: data.user.id,
+          email: data.user.email,
+          access_token: data.session?.access_token,
+          refresh_token: data.session?.refresh_token,
+        };
+      }
+
+      res.json({ 
+        user: data.user, 
+        session: data.session,
+        message: data.user?.email_confirmed_at ? "User created successfully" : "Please check your email to confirm your account"
+      });
+    } catch (error) {
+      console.error("Signup error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Sign in endpoint
+  app.post("/api/auth/signin", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        return res.status(401).json({ message: error.message });
+      }
+
+      if (data.user) {
+        // Update user in our database
+        await storage.upsertUser({
+          id: data.user.id,
+          email: data.user.email!,
+          firstName: data.user.user_metadata?.first_name,
+          lastName: data.user.user_metadata?.last_name,
+          profileImageUrl: data.user.user_metadata?.avatar_url,
+        });
+
+        // Store user session
+        (req.session as any).user = {
+          id: data.user.id,
+          email: data.user.email,
+          access_token: data.session?.access_token,
+          refresh_token: data.session?.refresh_token,
+        };
+      }
+
+      res.json({ user: data.user, session: data.session });
+    } catch (error) {
+      console.error("Signin error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Sign out endpoint
+  app.post("/api/auth/signout", async (req, res) => {
+    try {
+      const sessionUser = (req.session as any).user;
+      
+      if (sessionUser?.access_token) {
+        // Create a supabase client with the user's token
+        const userSupabase = createClient(
+          process.env.SUPABASE_URL!,
+          process.env.SUPABASE_ANON_KEY!,
+          {
+            global: {
+              headers: {
+                Authorization: `Bearer ${sessionUser.access_token}`
+              }
+            }
+          }
+        );
+        
+        await userSupabase.auth.signOut();
+      }
+
+      // Clear session
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("Session destroy error:", err);
+        }
+      });
+
+      res.json({ message: "Signed out successfully" });
+    } catch (error) {
+      console.error("Signout error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get current user endpoint
+  app.get("/api/auth/user", async (req, res) => {
+    try {
+      const sessionUser = (req.session as any).user;
+
+      if (!sessionUser?.access_token) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Create a supabase client with the user's token
+      const userSupabase = createClient(
+        process.env.SUPABASE_URL!,
+        process.env.SUPABASE_ANON_KEY!,
+        {
+          global: {
+            headers: {
+              Authorization: `Bearer ${sessionUser.access_token}`
+            }
+          }
+        }
+      );
+
+      const { data: { user }, error } = await userSupabase.auth.getUser();
+
+      if (error || !user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Get user data from our database
+      const dbUser = await storage.getUser(user.id);
+
+      res.json({ 
+        user: {
+          id: user.id,
+          email: user.email,
+          ...dbUser
+        }
+      });
+    } catch (error) {
+      console.error("Get user error:", error);
+      res.status(401).json({ message: "Unauthorized" });
+    }
+  });
+
+  // Password reset request endpoint
+  app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${req.protocol}://${req.get('host')}/reset-password`,
+      });
+
+      if (error) {
+        return res.status(400).json({ message: error.message });
+      }
+
+      res.json({ message: "Password reset email sent" });
+    } catch (error) {
+      console.error("Password reset error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Update password endpoint
+  app.post("/api/auth/update-password", async (req, res) => {
+    try {
+      const { password } = req.body;
+      const sessionUser = (req.session as any).user;
+
+      if (!sessionUser?.access_token) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      if (!password) {
+        return res.status(400).json({ message: "Password is required" });
+      }
+
+      // Create a supabase client with the user's token
+      const userSupabase = createClient(
+        process.env.SUPABASE_URL!,
+        process.env.SUPABASE_ANON_KEY!,
+        {
+          global: {
+            headers: {
+              Authorization: `Bearer ${sessionUser.access_token}`
+            }
+          }
+        }
+      );
+
+      const { error } = await userSupabase.auth.updateUser({ password });
+
+      if (error) {
+        return res.status(400).json({ message: error.message });
+      }
+
+      res.json({ message: "Password updated successfully" });
+    } catch (error) {
+      console.error("Update password error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+}
+
+export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  try {
+    const sessionUser = (req.session as any).user;
+
+    if (!sessionUser?.access_token) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    // Create a supabase client with the user's token
+    const userSupabase = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${sessionUser.access_token}`
+          }
+        }
+      }
+    );
+
+    const { data: { user }, error } = await userSupabase.auth.getUser();
+
+    if (error || !user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    // Add user to request object for use in other routes
+    (req as any).currentUser = user;
+    
+    next();
+  } catch (error) {
+    console.error("Authentication error:", error);
+    res.status(401).json({ message: "Unauthorized" });
+  }
+};
