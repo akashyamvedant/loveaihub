@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/footer";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { AuthBanner } from "@/components/AuthBanner";
 import { 
   Sparkles, 
   Image, 
@@ -26,9 +27,17 @@ export default function Landing() {
   const [mounted, setMounted] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalTab, setAuthModalTab] = useState<"signin" | "signup">("signup");
+  const [showAuthBanner, setShowAuthBanner] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    
+    // Check for OAuth fallback parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('auth') === 'fallback' || urlParams.get('fallback') === 'email') {
+      setShowAuthBanner(true);
+      setAuthModalTab("signup");
+    }
   }, []);
 
   if (!mounted) {
@@ -49,6 +58,17 @@ export default function Landing() {
         <div className="absolute bottom-20 left-1/4 w-16 h-16 bg-cyan-500/20 rounded-full blur-xl animate-float" style={{ animationDelay: "-4s" }}></div>
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Auth Banner for OAuth Fallback */}
+          {showAuthBanner && (
+            <AuthBanner
+              onClose={() => setShowAuthBanner(false)}
+              onOpenAuth={() => {
+                setShowAuthModal(true);
+                setAuthModalTab("signup");
+              }}
+            />
+          )}
+          
           <div className="text-center mb-16">
             <div className="mb-6">
               <span className="px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-sm font-medium text-primary">
