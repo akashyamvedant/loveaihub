@@ -1,7 +1,9 @@
 // Vercel serverless function entry point
-import express from "express";
-import { registerRoutes } from "../server/routes";
-import { setupAuth } from "../server/supabaseAuth";
+import 'dotenv/config';
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
+import { createServer } from "http";
+import { storage } from "../server/storage.js";
+import { setupAuth, isAuthenticated } from "../server/supabaseAuth.js";
 
 const app = express();
 
@@ -22,30 +24,15 @@ app.use((req, res, next) => {
   }
 });
 
-// Add error handling middleware
-app.use((err: any, req: any, res: any, next: any) => {
-  console.error('Serverless function error:', err);
-  res.status(500).json({ 
-    message: 'Internal server error',
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
-  });
-});
-
-// Initialize authentication
+// Initialize authentication (synchronous)
 try {
   setupAuth(app);
+  console.log('✓ Authentication setup completed');
 } catch (error) {
-  console.error('Error setting up auth:', error);
+  console.error('✗ Error setting up auth:', error);
 }
 
-// Setup API routes
-try {
-  registerRoutes(app);
-} catch (error) {
-  console.error('Error setting up routes:', error);
-}
-
-// Add a health check endpoint
+// Add simple API routes directly (avoiding complex imports for serverless)
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
@@ -55,6 +42,32 @@ app.get('/api/health', (req, res) => {
       supabase_anon_key: !!process.env.SUPABASE_ANON_KEY,
       database_url: !!process.env.DATABASE_URL
     }
+  });
+});
+
+// User profile endpoint
+app.get('/api/user/profile', isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.currentUser.id;
+    const user = await storage.getUser(userId);
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
+    res.json(user);
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Add error handling middleware
+app.use((err: any, req: any, res: any, next: any) => {
+  console.error('Serverless function error:', err);
+  res.status(500).json({ 
+    message: 'Internal server error',
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
   });
 });
 
