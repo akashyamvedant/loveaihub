@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { authStorage } from './authStorage';
 
 // These will be provided by the user as environment variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
@@ -37,7 +38,14 @@ export const authApi = {
         throw new Error(errorMessage);
       }
 
-      return await response.json();
+      const data = await response.json();
+      
+      // Store the session token for future requests
+      if (data.session?.access_token) {
+        authStorage.setToken(data.session.access_token);
+      }
+
+      return data;
     } catch (error) {
       console.error('Sign up error:', error);
       throw error;
@@ -73,7 +81,14 @@ export const authApi = {
         throw new Error(errorMessage);
       }
 
-      return await response.json();
+      const data = await response.json();
+      
+      // Store the session token for future requests
+      if (data.session?.access_token) {
+        authStorage.setToken(data.session.access_token);
+      }
+
+      return data;
     } catch (error) {
       console.error('Sign in error:', error);
       throw error;
@@ -88,6 +103,9 @@ export const authApi = {
       },
     });
 
+    // Clear stored token regardless of response
+    authStorage.removeToken();
+
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.message || 'Sign out failed');
@@ -97,10 +115,25 @@ export const authApi = {
   },
 
   async getCurrentUser() {
-    const response = await fetch('/api/auth/user');
+    const token = authStorage.getToken();
+    
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+
+    // Add authorization header if we have a token
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch('/api/auth/user', {
+      headers,
+    });
     
     if (!response.ok) {
       if (response.status === 401) {
+        // Clear invalid token
+        authStorage.removeToken();
         return null; // User not authenticated
       }
       const error = await response.json();
