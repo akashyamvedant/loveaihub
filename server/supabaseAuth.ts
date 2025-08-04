@@ -463,6 +463,52 @@ export async function setupAuth(app: Express) {
       // Handle authorization code flow
       if (!code) {
         console.error('No code or access_token in callback. Full query:', JSON.stringify(req.query, null, 2));
+        
+        // Enhanced debugging for Supabase configuration issues
+        const referer = req.get('referer');
+        console.log('🚨 OAUTH DIAGNOSIS:');
+        console.log('   - Callback reached from:', referer);
+        console.log('   - Expected: URL with ?code=... parameter');
+        console.log('   - Received: Empty query object');
+        console.log('   - This indicates Supabase configuration issue');
+        
+        if (referer && referer.includes('accounts.google.com')) {
+          return res.send(`
+            <html>
+              <head><title>OAuth Configuration Issue</title></head>
+              <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; line-height: 1.6;">
+                <h1 style="color: #dc2626;">🚨 OAuth Configuration Issue</h1>
+                <p><strong>Problem:</strong> The OAuth callback was reached from Google, but no authorization code was received from Supabase.</p>
+                
+                <h2>Required Fix in Supabase Dashboard:</h2>
+                <ol>
+                  <li><strong>Go to Supabase Dashboard:</strong> <a href="https://supabase.com/dashboard/project/gfrpidhedgqixkgafumc/auth/url-configuration" target="_blank">Authentication → URL Configuration</a></li>
+                  <li><strong>Site URL:</strong> <code>https://www.loveaihub.com</code></li>
+                  <li><strong>Redirect URLs:</strong> Add <code>https://www.loveaihub.com/auth/callback</code></li>
+                  <li><strong>Google Provider:</strong> Go to <a href="https://supabase.com/dashboard/project/gfrpidhedgqixkgafumc/auth/providers" target="_blank">Authentication → Providers</a> and verify Google is enabled</li>
+                </ol>
+                
+                <h3>Test URL (after fixing configuration):</h3>
+                <p>Try this direct link: <a href="https://gfrpidhedgqixkgafumc.supabase.co/auth/v1/authorize?provider=google&redirect_to=https://www.loveaihub.com/auth/callback" target="_blank">Test OAuth Flow</a></p>
+                
+                <p><a href="/" style="background: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Return to Home</a></p>
+                
+                <hr>
+                <details>
+                  <summary>Technical Details</summary>
+                  <pre style="background: #f3f4f6; padding: 10px; border-radius: 5px; overflow-x: auto;">${JSON.stringify({
+                    query: req.query,
+                    url: req.url,
+                    referer: referer,
+                    timestamp: new Date().toISOString(),
+                    diagnosis: 'Supabase not passing authorization code to callback'
+                  }, null, 2)}</pre>
+                </details>
+              </body>
+            </html>
+          `);
+        }
+        
         return res.redirect("/?error=missing_auth_data");
       }
 
