@@ -166,9 +166,10 @@ app.post('/api/auth/google', async (req, res) => {
       provider: 'google',
       options: {
         redirectTo: callbackUrl,
+        scopes: 'openid email profile',
         queryParams: {
           access_type: 'offline',
-          prompt: 'consent'
+          prompt: 'select_account'
         }
       }
     });
@@ -258,7 +259,48 @@ app.get('/auth/callback', async (req, res) => {
 
     // Handle authorization code flow
     if (!code) {
-      console.error('No code or access_token in callback:', req.query);
+      console.error('No code or access_token in callback. Full query:', JSON.stringify(req.query, null, 2));
+      console.error('Full request details:', {
+        method: req.method,
+        url: req.url,
+        headers: req.headers,
+        params: req.params,
+        query: req.query
+      });
+      
+      // Try to extract from URL fragments (hash parameters)
+      const urlParams = new URLSearchParams(req.url?.split('?')[1] || '');
+      const fragmentCode = urlParams.get('code');
+      const fragmentToken = urlParams.get('access_token');
+      
+      if (fragmentCode) {
+        console.log('Found code in URL fragments:', fragmentCode);
+        // Process the fragment code
+        const { data, error } = await supabase.auth.exchangeCodeForSession(fragmentCode);
+        if (!error && data.session) {
+          res.cookie('supabase-auth-token', data.session.access_token, {
+            httpOnly: false,
+            secure: true,
+            sameSite: 'lax',
+            maxAge: 1000 * 60 * 60 * 24 * 7,
+            domain: '.loveaihub.com'
+          });
+          return res.redirect("https://www.loveaihub.com/?auth=success");
+        }
+      }
+      
+      if (fragmentToken) {
+        console.log('Found access_token in URL fragments:', fragmentToken);
+        res.cookie('supabase-auth-token', fragmentToken, {
+          httpOnly: false,
+          secure: true,
+          sameSite: 'lax',
+          maxAge: 1000 * 60 * 60 * 24 * 7,
+          domain: '.loveaihub.com'
+        });
+        return res.redirect("https://www.loveaihub.com/?auth=success");
+      }
+      
       return res.redirect("https://www.loveaihub.com/?error=missing_auth_data");
     }
 

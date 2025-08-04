@@ -179,44 +179,29 @@ export const authApi = {
 
   async signInWithGoogle() {
     try {
+      console.log('Starting Google OAuth request...');
       const response = await fetch('/api/auth/google', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          redirectUrl: window.location.origin 
+        body: JSON.stringify({
+          redirectUrl: window.location.origin
         }),
       });
 
-      // Clone the response to avoid "body stream already read" error
-      const responseClone = response.clone();
-
       if (!response.ok) {
-        let errorMessage = 'Google sign in failed';
-        try {
-          const error = await response.json();
-          errorMessage = error.message || errorMessage;
-        } catch (jsonError) {
-          try {
-            const textError = await responseClone.text();
-            console.error('Non-JSON error response:', textError);
-            errorMessage = `Server error: ${response.status} ${response.statusText}`;
-          } catch (textError) {
-            errorMessage = `Server error: ${response.status} ${response.statusText}`;
-          }
-        }
-        throw new Error(errorMessage);
+        const error = await response.json();
+        throw new Error(error.message || 'Google OAuth setup failed');
       }
 
-      const data = await response.json();
+      const { url } = await response.json();
+      console.log('Redirecting to Google OAuth URL:', url);
       
-      // Redirect to Google OAuth URL
-      if (data.url) {
-        window.location.href = data.url;
-      }
+      // Direct redirect to Google OAuth
+      window.location.href = url;
       
-      return data;
+      return { success: true };
     } catch (error) {
       console.error('Google OAuth error:', error);
       throw error;

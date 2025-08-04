@@ -123,6 +123,7 @@ export function useGoogleSignIn() {
   return useMutation({
     mutationFn: async () => {
       try {
+        console.log('Starting Google OAuth flow...');
         const result = await authApi.signInWithGoogle();
         return result;
       } catch (error: any) {
