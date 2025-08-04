@@ -155,17 +155,29 @@ app.get('/api/auth/user', async (req, res) => {
 app.post('/api/auth/google', async (req, res) => {
   try {
     const { redirectUrl } = req.body;
+    console.log('Google OAuth request received:', { redirectUrl });
+    
+    // Determine the callback URL based on environment
+    const isProduction = redirectUrl.includes('loveaihub.com');
+    const callbackUrl = isProduction 
+      ? 'https://www.loveaihub.com/auth/callback'
+      : `${redirectUrl}/auth/callback`;
+    
+    console.log('Attempting OAuth with redirect to:', callbackUrl);
+    
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${redirectUrl}/auth/callback`
+        redirectTo: callbackUrl
       }
     });
 
     if (error) {
+      console.error('OAuth setup error:', error);
       return res.status(400).json({ message: error.message });
     }
 
+    console.log('OAuth URL generated successfully:', data.url);
     res.json({ url: data.url });
   } catch (error) {
     console.error('Google OAuth error:', error);
