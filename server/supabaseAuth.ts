@@ -426,43 +426,73 @@ export async function setupAuth(app: Express) {
     } catch (error: any) {
       console.error("Google OAuth endpoint error:", error);
       return res.status(500).json({ 
-        message: `Server error: ${error.message || 'Internal server error'}` 
+        message: `OAuth error: ${error.message || 'Internal server error'}` 
       });
     }
   });
 
   // OAuth callback endpoint
-  app.get("/auth/callback", async (req, res) => {
+  app.get('/auth/callback', async (req, res) => {
     try {
-      const { code, error: oauthError } = req.query;
+      console.log('OAuth callback received:', {
+        query: req.query,
+        headers: req.headers,
+        url: req.url
+      });
 
+      const { code, error: oauthError, access_token, refresh_token } = req.query;
+
+      // Handle OAuth error responses
       if (oauthError) {
+        console.error('OAuth error from provider:', oauthError);
         return res.redirect(`/?error=${encodeURIComponent(oauthError.toString())}`);
       }
 
-      if (!code) {
-        return res.redirect("/?error=missing_code");
+      // Handle direct token response (implicit flow)
+      if (access_token) {
+        console.log('Direct token received, setting cookie');
+        res.cookie('supabase-auth-token', access_token.toString(), {
+          httpOnly: false,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+        });
+        return res.redirect("/?auth=success");
       }
 
+      // Handle authorization code flow
+      if (!code) {
+        console.error('No code or access_token in callback. Full query:', JSON.stringify(req.query, null, 2));
+        return res.redirect("/?error=missing_auth_data");
+      }
+
+      console.log('Exchanging code for session:', code);
       const supabaseClient = initializeSupabase();
       if (!supabaseClient) {
-        return res.redirect("/?error=authentication_unavailable");
+        return res.redirect("/?error=authentication_service_unavailable");
       }
 
       const { data, error } = await supabaseClient.auth.exchangeCodeForSession(code.toString());
 
       if (error) {
-        console.error("OAuth callback error:", error);
+        console.error('Error exchanging code for session:', error);
         return res.redirect(`/?error=${encodeURIComponent(error.message)}`);
       }
 
-      if (data.user && data.session) {
-        // Create/update user in our database
+      if (!data.session) {
+        console.error('No session returned from code exchange');
+        return res.redirect("/?error=no_session_created");
+      }
+
+      console.log('OAuth successful, user:', data.user?.email);
+
+      // Create/update user in our database
+      if (data.user) {
         await storage.upsertUser({
           id: data.user.id,
           email: data.user.email!,
-          firstName: data.user.user_metadata?.full_name?.split(' ')[0] || data.user.user_metadata?.first_name,
-          lastName: data.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || data.user.user_metadata?.last_name,
+          firstName: data.user.user_metadata?.first_name || data.user.user_metadata?.full_name?.split(' ')[0],
+          lastName: data.user.user_metadata?.last_name || data.user.user_metadata?.full_name?.split(' ').slice(1).join(' '),
           profileImageUrl: data.user.user_metadata?.avatar_url,
         });
 
@@ -473,15 +503,13 @@ export async function setupAuth(app: Express) {
           access_token: data.session.access_token,
           refresh_token: data.session.refresh_token,
         };
-
-        // Redirect to dashboard or homepage
-        res.redirect("/");
-      } else {
-        res.redirect("/?error=oauth_failed");
       }
-    } catch (error) {
-      console.error("OAuth callback error:", error);
-      res.redirect("/?error=server_error");
+
+      // Redirect to home page with success parameter
+      res.redirect("/?auth=success");
+    } catch (error: any) {
+      console.error('OAuth callback error:', error);
+      res.redirect(`/?error=${encodeURIComponent(error.message || 'authentication_error')}`);
     }
   });
   
