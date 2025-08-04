@@ -213,6 +213,47 @@ app.post('/api/auth/update-password', async (req, res) => {
   }
 });
 
+// OAuth callback endpoint - CRITICAL for Google OAuth to work
+app.get('/auth/callback', async (req, res) => {
+  try {
+    const { code, error: oauthError } = req.query;
+
+    if (oauthError) {
+      return res.redirect(`https://www.loveaihub.com/?error=${encodeURIComponent(oauthError.toString())}`);
+    }
+
+    if (!code) {
+      return res.redirect("https://www.loveaihub.com/?error=missing_code");
+    }
+
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code.toString());
+
+    if (error) {
+      console.error("OAuth callback error:", error);
+      return res.redirect(`https://www.loveaihub.com/?error=${encodeURIComponent(error.message)}`);
+    }
+
+    if (data.user && data.session) {
+      // Store session data in cookie for frontend access
+      res.cookie('supabase-auth-token', data.session.access_token, {
+        httpOnly: false, // Allow frontend access
+        secure: true, // HTTPS only
+        sameSite: 'lax',
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+        domain: '.loveaihub.com'
+      });
+
+      // Redirect to homepage with success
+      res.redirect("https://www.loveaihub.com/?auth=success");
+    } else {
+      res.redirect("https://www.loveaihub.com/?error=oauth_failed");
+    }
+  } catch (error) {
+    console.error("OAuth callback error:", error);
+    res.redirect("https://www.loveaihub.com/?error=server_error");
+  }
+});
+
 // Add error handling middleware
 app.use((err: any, req: any, res: any, next: any) => {
   console.error('Serverless function error:', err);
