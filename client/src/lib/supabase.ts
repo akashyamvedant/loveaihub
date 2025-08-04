@@ -13,6 +13,7 @@ export const authApi = {
     try {
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
+        credentials: 'include', // Include cookies in request
         headers: {
           'Content-Type': 'application/json',
         },
@@ -56,6 +57,7 @@ export const authApi = {
     try {
       const response = await fetch('/api/auth/signin', {
         method: 'POST',
+        credentials: 'include', // Include cookies in request
         headers: {
           'Content-Type': 'application/json',
         },
@@ -98,12 +100,13 @@ export const authApi = {
   async signOut() {
     const response = await fetch('/api/auth/signout', {
       method: 'POST',
+      credentials: 'include', // Include cookies in request
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
-    // Clear stored token regardless of response
+    // Clear any stored tokens
     authStorage.removeToken();
 
     if (!response.ok) {
@@ -115,24 +118,17 @@ export const authApi = {
   },
 
   async getCurrentUser() {
-    const token = authStorage.getToken();
-    
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-    };
-
-    // Add authorization header if we have a token
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
     const response = await fetch('/api/auth/user', {
-      headers,
+      method: 'GET',
+      credentials: 'include', // Include cookies in request
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
     
     if (!response.ok) {
       if (response.status === 401) {
-        // Clear invalid token
+        // Clear any stored tokens
         authStorage.removeToken();
         return null; // User not authenticated
       }
