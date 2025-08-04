@@ -1,9 +1,9 @@
 // Vercel serverless function entry point
 import 'dotenv/config';
-import express, { type Express, type Request, type Response, type NextFunction } from "express";
-import { createServer } from "http";
-import { storage } from "../server/storage.js";
-import { setupAuth, isAuthenticated } from "../server/supabaseAuth.js";
+import express from "express";
+import { createClient } from '@supabase/supabase-js';
+import { drizzle } from "drizzle-orm/neon-http";
+import { neon } from "@neondatabase/serverless";
 
 const app = express();
 
@@ -24,15 +24,39 @@ app.use((req, res, next) => {
   }
 });
 
-// Initialize authentication (synchronous)
-try {
-  setupAuth(app);
-  console.log('✓ Authentication setup completed');
-} catch (error) {
-  console.error('✗ Error setting up auth:', error);
-}
+// Initialize Supabase client
+const supabaseUrl = process.env.SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// Add simple API routes directly (avoiding complex imports for serverless)
+// Initialize database connection
+const sql = neon(process.env.DATABASE_URL!);
+const db = drizzle(sql);
+
+// Authentication middleware
+const isAuthenticated = async (req: any, res: any, next: any) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const token = authHeader.substring(7);
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+
+    if (error || !user) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    req.currentUser = user;
+    next();
+  } catch (error) {
+    console.error('Auth middleware error:', error);
+    res.status(401).json({ message: 'Unauthorized' });
+  }
+};
+
+// Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
@@ -45,20 +69,147 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// User profile endpoint
-app.get('/api/user/profile', isAuthenticated, async (req: any, res) => {
+// Auth endpoints
+app.post('/api/auth/signup', async (req, res) => {
   try {
-    const userId = req.currentUser.id;
-    const user = await storage.getUser(userId);
+    const { email, password, firstName, lastName } = req.body;
     
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          first_name: firstName,
+          last_name: lastName
+        }
+      }
+    });
+
+    if (error) {
+      return res.status(400).json({ message: error.message });
     }
-    
-    res.json(user);
+
+    res.json({ user: data.user, session: data.session });
   } catch (error) {
-    console.error('Error fetching user profile:', error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error('Signup error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.post('/api/auth/signin', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    res.json({ user: data.user, session: data.session });
+  } catch (error) {
+    console.error('Signin error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.post('/api/auth/signout', async (req, res) => {
+  try {
+    const { error } = await supabase.auth.signOut();
+    
+    if (error) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    res.json({ message: 'Signed out successfully' });
+  } catch (error) {
+    console.error('Signout error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.get('/api/auth/user', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const token = authHeader.substring(7);
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+
+    if (error || !user) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    res.json({ user });
+  } catch (error) {
+    console.error('Get user error:', error);
+    res.status(401).json({ message: 'Unauthorized' });
+  }
+});
+
+app.post('/api/auth/google', async (req, res) => {
+  try {
+    const { redirectUrl } = req.body;
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${redirectUrl}/auth/callback`
+      }
+    });
+
+    if (error) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    res.json({ url: data.url });
+  } catch (error) {
+    console.error('Google OAuth error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    
+    if (error) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    res.json({ message: 'Password reset email sent' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.post('/api/auth/update-password', async (req, res) => {
+  try {
+    const { password } = req.body;
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const token = authHeader.substring(7);
+    const { data, error } = await supabase.auth.updateUser({ password });
+
+    if (error) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    res.json({ user: data.user });
+  } catch (error) {
+    console.error('Update password error:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 

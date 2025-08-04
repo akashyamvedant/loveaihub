@@ -7,8 +7,6 @@
       "config": {
         "maxDuration": 30,
         "includeFiles": [
-          "server/**",
-          "shared/**",
           ".env"
         ]
       }
