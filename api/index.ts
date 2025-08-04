@@ -157,18 +157,19 @@ app.post('/api/auth/google', async (req, res) => {
     const { redirectUrl } = req.body;
     console.log('Google OAuth request received:', { redirectUrl });
     
-    // Determine the callback URL based on environment
-    const isProduction = redirectUrl.includes('loveaihub.com');
-    const callbackUrl = isProduction 
-      ? 'https://www.loveaihub.com/auth/callback'
-      : `${redirectUrl}/auth/callback`;
+    // Always use production callback URL for consistency
+    const callbackUrl = 'https://www.loveaihub.com/auth/callback';
     
     console.log('Attempting OAuth with redirect to:', callbackUrl);
     
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: callbackUrl
+        redirectTo: callbackUrl,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent'
+        }
       }
     });
 
@@ -228,16 +229,40 @@ app.post('/api/auth/update-password', async (req, res) => {
 // OAuth callback endpoint - CRITICAL for Google OAuth to work
 app.get('/auth/callback', async (req, res) => {
   try {
-    const { code, error: oauthError } = req.query;
+    console.log('OAuth callback received:', {
+      query: req.query,
+      headers: req.headers,
+      url: req.url
+    });
 
+    const { code, error: oauthError, access_token, refresh_token } = req.query;
+
+    // Handle OAuth error responses
     if (oauthError) {
+      console.error('OAuth error from provider:', oauthError);
       return res.redirect(`https://www.loveaihub.com/?error=${encodeURIComponent(oauthError.toString())}`);
     }
 
-    if (!code) {
-      return res.redirect("https://www.loveaihub.com/?error=missing_code");
+    // Handle direct token response (implicit flow)
+    if (access_token) {
+      console.log('Direct token received, setting cookie');
+      res.cookie('supabase-auth-token', access_token.toString(), {
+        httpOnly: false, // Allow frontend access
+        secure: true, // HTTPS only
+        sameSite: 'lax',
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+        domain: '.loveaihub.com'
+      });
+      return res.redirect("https://www.loveaihub.com/?auth=success");
     }
 
+    // Handle authorization code flow
+    if (!code) {
+      console.error('No code or access_token in callback:', req.query);
+      return res.redirect("https://www.loveaihub.com/?error=missing_auth_data");
+    }
+
+    console.log('Exchanging code for session:', code);
     const { data, error } = await supabase.auth.exchangeCodeForSession(code.toString());
 
     if (error) {
@@ -246,6 +271,7 @@ app.get('/auth/callback', async (req, res) => {
     }
 
     if (data.user && data.session) {
+      console.log('Session created successfully for user:', data.user.email);
       // Store session data in cookie for frontend access
       res.cookie('supabase-auth-token', data.session.access_token, {
         httpOnly: false, // Allow frontend access
@@ -258,6 +284,7 @@ app.get('/auth/callback', async (req, res) => {
       // Redirect to homepage with success
       res.redirect("https://www.loveaihub.com/?auth=success");
     } else {
+      console.error('No user or session in response:', data);
       res.redirect("https://www.loveaihub.com/?error=oauth_failed");
     }
   } catch (error) {
