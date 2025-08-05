@@ -29,19 +29,11 @@
       "dest": "/api/index.ts"
     },
     {
-      "src": "/reset-password",
-      "dest": "/dist/public/index.html"
+      "src": "/assets/(.*)",
+      "dest": "/dist/public/assets/$1"
     },
     {
-      "src": "/blog",
-      "dest": "/dist/public/index.html"
-    },
-    {
-      "src": "/pricing",
-      "dest": "/dist/public/index.html"
-    },
-    {
-      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot))",
+      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|map))",
       "dest": "/dist/public/$1"
     },
     {
