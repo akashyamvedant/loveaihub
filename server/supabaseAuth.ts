@@ -330,6 +330,40 @@ export async function setupAuth(app: Express) {
   app.post("/api/auth/update-password", async (req, res) => {
     try {
       const { password } = req.body;
+      const authHeader = req.headers.authorization;
+
+      // Check for token in Authorization header first (for reset password flow)
+      if (authHeader?.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        
+        if (!password) {
+          return res.status(400).json({ message: "Password is required" });
+        }
+
+        // Create a supabase client with the user's token
+        const userSupabase = createClient(
+          process.env.SUPABASE_URL || 'https://gfrpidhedgqixkgafumc.supabase.co',
+          process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcnBpZGhlZGdxaXhrZ2FmdW1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1ODM0NjgsImV4cCI6MjA2OTE1OTQ2OH0.JaYdiISBG8vqfen_qzkOVgYRBq4V2v5CzvxjhBBsM9c',
+          {
+            global: {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            }
+          }
+        );
+
+        const { error } = await userSupabase.auth.updateUser({ password });
+
+        if (error) {
+          return res.status(400).json({ message: error.message });
+        }
+
+        res.json({ message: "Password updated successfully" });
+        return;
+      }
+
+      // Fallback to session-based auth for regular authenticated users
       const sessionUser = (req.session as any).user;
 
       if (!sessionUser?.access_token) {
@@ -342,8 +376,8 @@ export async function setupAuth(app: Express) {
 
       // Create a supabase client with the user's token
       const userSupabase = createClient(
-        process.env.SUPABASE_URL!,
-        process.env.SUPABASE_ANON_KEY!,
+        process.env.SUPABASE_URL || 'https://gfrpidhedgqixkgafumc.supabase.co',
+        process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcnBpZGhlZGdxaXhrZ2FmdW1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1ODM0NjgsImV4cCI6MjA2OTE1OTQ2OH0.JaYdiISBG8vqfen_qzkOVgYRBq4V2v5CzvxjhBBsM9c',
         {
           global: {
             headers: {
