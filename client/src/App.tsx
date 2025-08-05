@@ -19,6 +19,7 @@ import ApiDocs from "@/pages/api-docs";
 import Blog from "@/pages/blog";
 import Admin from "@/pages/admin";
 import Pricing from "@/pages/pricing";
+import ResetPassword from "@/pages/reset-password";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -90,6 +91,7 @@ function Router() {
           <Route path="/" component={Landing} />
           <Route path="/blog" component={Blog} />
           <Route path="/pricing" component={Pricing} />
+          <Route path="/reset-password" component={ResetPassword} />
         </>
       )}
       <Route component={NotFound} />

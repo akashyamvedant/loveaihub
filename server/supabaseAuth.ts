@@ -312,7 +312,7 @@ export async function setupAuth(app: Express) {
       }
 
       const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-        redirectTo: `${req.protocol}://${req.get('host')}/reset-password`,
+        redirectTo: `https://www.loveaihub.com/reset-password`,
       });
 
       if (error) {

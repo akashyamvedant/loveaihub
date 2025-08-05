@@ -226,7 +226,9 @@ app.post('/api/auth/reset-password', async (req, res) => {
   try {
     const { email } = req.body;
     
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://www.loveaihub.com/reset-password',
+    });
     
     if (error) {
       return res.status(400).json({ message: error.message });
