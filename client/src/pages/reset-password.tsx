@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Lock, Eye, EyeOff, Loader2, CheckCircle } from "lucide-react";
+import PasswordResetTester from "@/components/PasswordResetTester";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
@@ -64,12 +65,12 @@ export default function ResetPassword() {
     } else if (!type && !accessTokenFromHash) {
       // Show debug information and allow user to proceed if they have tokens
       console.log('No tokens found in URL - this might be a direct visit or the tokens were cleared');
-      // Always show the page, just indicate the issue
+      // Always show the page, but provide helpful guidance
       setTimeout(() => {
         toast({
-          title: "Invalid Reset Link", 
-          description: "This password reset link appears to be invalid. Please use the link from your email.",
-          variant: "destructive",
+          title: "Reset Password", 
+          description: "Please use the reset link from your email, or request a new password reset from the login page.",
+          variant: "default",
         });
       }, 1000);
     } else {
@@ -219,10 +220,15 @@ export default function ResetPassword() {
         <div className="relative bg-slate-900 rounded-3xl p-8">
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold text-white mb-2">Reset Your Password</h1>
-            <p className="text-slate-400">Enter your new password below</p>
+            <p className="text-slate-400">
+              {accessToken ? "Enter your new password below" : "Send yourself a reset email to test the password reset flow"}
+            </p>
           </div>
           
-          <form onSubmit={handleSubmit} className="space-y-6">
+          {!accessToken ? (
+            <PasswordResetTester />
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-medium text-white">
                   New Password
@@ -298,7 +304,8 @@ export default function ResetPassword() {
                   Back to Home
                 </Button>
               </div>
-          </form>
+            </form>
+          )}
         </div>
       </div>
     </div>
