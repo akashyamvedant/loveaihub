@@ -104,6 +104,7 @@ The backend follows a service-oriented architecture, handling AI API integration
   - **Status**: Code fixes complete, requires production deployment to take full effect
   - **Critical Fix**: Updated `vercel.json` routing configuration to properly handle `/reset-password` client-side route (was causing 404 NOT_FOUND errors)
   - **Final Resolution**: Simplified Vercel routing to standard SPA configuration with proper fallback routing to resolve persistent 404 errors
+  - **Advanced Fix Applied**: Implemented correct Vercel `rewrites` configuration (not `routes`) for SPA routing per official documentation - using regex pattern to exclude API endpoints while allowing client-side routing
 
 - **OAuth Redirect URL Fix (August 5, 2025)**
   - **RESOLVED**: Fixed critical OAuth redirect URL conflict causing 404 NOT_FOUND errors

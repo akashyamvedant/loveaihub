@@ -27,18 +27,12 @@
     {
       "src": "/auth/callback",
       "dest": "/api/index.ts"
-    },
+    }
+  ],
+  "rewrites": [
     {
-      "src": "/assets/(.*)",
-      "dest": "/dist/public/assets/$1"
-    },
-    {
-      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|map))",
-      "dest": "/dist/public/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/dist/public/index.html"
+      "source": "/((?!api/|auth/|assets/).*)",
+      "destination": "/index.html"
     }
   ]
 }
