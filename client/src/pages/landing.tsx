@@ -38,6 +38,17 @@ export default function Landing() {
       setShowAuthBanner(true);
       setAuthModalTab("signup");
     }
+    
+    // Check if user is already authenticated and redirect to dashboard
+    const authToken = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('supabase-auth-token='))
+      ?.split('=')[1];
+    
+    if (authToken && urlParams.get('auth') === 'success') {
+      // Redirect authenticated users to dashboard
+      window.location.href = '/home';
+    }
   }, []);
 
   if (!mounted) {

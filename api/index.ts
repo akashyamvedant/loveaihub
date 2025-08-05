@@ -349,7 +349,7 @@ app.get('/auth/callback', async (req, res) => {
           });
         }
 
-        return res.redirect("https://www.loveaihub.com/?auth=success");
+        return res.redirect("https://www.loveaihub.com/home");
       } catch (tokenError) {
         console.error('Error processing token:', tokenError);
         return res.redirect("https://www.loveaihub.com/?error=token_processing_failed");
@@ -384,7 +384,7 @@ app.get('/auth/callback', async (req, res) => {
             maxAge: 1000 * 60 * 60 * 24 * 7,
             domain: '.loveaihub.com'
           });
-          return res.redirect("https://www.loveaihub.com/?auth=success");
+          return res.redirect("https://www.loveaihub.com/home");
         }
       }
       
@@ -492,7 +492,7 @@ app.get('/auth/callback', async (req, res) => {
                   })
                 }).then(response => {
                   if (response.ok) {
-                    window.location.href = 'https://www.loveaihub.com/?auth=success';
+                    window.location.href = 'https://www.loveaihub.com/home';
                   } else {
                     window.location.href = 'https://www.loveaihub.com/?error=token_processing_failed';
                   }
@@ -532,7 +532,7 @@ app.get('/auth/callback', async (req, res) => {
       });
 
       // Redirect to homepage with success
-      res.redirect("https://www.loveaihub.com/?auth=success");
+      res.redirect("https://www.loveaihub.com/home");
     } else {
       console.error('No user or session in response:', data);
       res.redirect("https://www.loveaihub.com/?error=oauth_failed");
