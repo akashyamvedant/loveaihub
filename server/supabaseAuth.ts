@@ -336,22 +336,32 @@ export async function setupAuth(app: Express) {
       if (authHeader?.startsWith('Bearer ')) {
         const token = authHeader.substring(7);
         
+        console.log("Reset password attempt with token:", token.substring(0, 20) + "...");
+        
         if (!password) {
           return res.status(400).json({ message: "Password is required" });
         }
 
-        // Create a supabase client with the user's token
+        // Create a supabase client and set session for password reset
         const userSupabase = createClient(
           process.env.SUPABASE_URL || 'https://gfrpidhedgqixkgafumc.supabase.co',
-          process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcnBpZGhlZGdxaXhrZ2FmdW1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1ODM0NjgsImV4cCI6MjA2OTE1OTQ2OH0.JaYdiISBG8vqfen_qzkOVgYRBq4V2v5CzvxjhBBsM9c',
-          {
-            global: {
-              headers: {
-                Authorization: `Bearer ${token}`
-              }
-            }
-          }
+          process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcnBpZGhlZGdxaXhrZ2FmdW1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1ODM0NjgsImV4cCI6MjA2OTE1OTQ2OH0.JaYdiISBG8vqfen_qzkOVgYRBq4V2v5CzvxjhBBsM9c'
         );
+
+        console.log("Setting session with access token...");
+        
+        // Set the session explicitly for password reset tokens
+        const { data: sessionData, error: sessionError } = await userSupabase.auth.setSession({
+          access_token: token,
+          refresh_token: '' // Not needed for password reset
+        });
+
+        if (sessionError) {
+          console.error("Session setup error:", sessionError);
+          return res.status(401).json({ message: `Invalid or expired reset token: ${sessionError.message}` });
+        }
+
+        console.log("Session established for user:", sessionData.user?.email);
 
         const { error } = await userSupabase.auth.updateUser({ password });
 

@@ -246,32 +246,52 @@ app.post('/api/auth/update-password', async (req, res) => {
     const { password } = req.body;
     const authHeader = req.headers.authorization;
     
+    console.log('Update password request received:', { 
+      hasAuthHeader: !!authHeader,
+      hasPassword: !!password 
+    });
+    
     if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ message: 'Unauthorized' });
+      return res.status(401).json({ message: 'Authorization header missing' });
+    }
+
+    if (!password) {
+      return res.status(400).json({ message: 'Password is required' });
     }
 
     const token = authHeader.substring(7);
+    console.log('Extracted token:', token.substring(0, 20) + '...');
     
     // Create a supabase client with the user's token for authentication
+    // For reset password tokens, we need to set the session first
     const userSupabase = createClient(
-      process.env.VITE_SUPABASE_URL!,
-      process.env.VITE_SUPABASE_ANON_KEY!,
-      {
-        global: {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      }
+      process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://gfrpidhedgqixkgafumc.supabase.co',
+      process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcnBpZGhlZGdxaXhrZ2FmdW1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1ODM0NjgsImV4cCI6MjA2OTE1OTQ2OH0.JaYdiISBG8vqfen_qzkOVgYRBq4V2v5CzvxjhBBsM9c'
     );
 
+    // Set the session explicitly for password reset tokens
+    const { data: sessionData, error: sessionError } = await userSupabase.auth.setSession({
+      access_token: token,
+      refresh_token: '' // Not needed for password reset
+    });
+
+    if (sessionError) {
+      console.error('Session setup error:', sessionError);
+      return res.status(401).json({ message: 'Invalid or expired reset token' });
+    }
+
+    console.log('Session established successfully for user:', sessionData.user?.email);
+
+    // Now update the password with the authenticated session
     const { data, error } = await userSupabase.auth.updateUser({ password });
 
     if (error) {
+      console.error('Password update error:', error);
       return res.status(400).json({ message: error.message });
     }
 
-    res.json({ user: data.user });
+    console.log('Password updated successfully for user:', data.user?.email);
+    res.json({ message: 'Password updated successfully', user: data.user });
   } catch (error) {
     console.error('Update password error:', error);
     res.status(500).json({ message: 'Internal server error' });

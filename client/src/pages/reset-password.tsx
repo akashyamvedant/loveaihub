@@ -43,7 +43,8 @@ export default function ResetPassword() {
       type, 
       hasAccessToken: !!accessTokenFromHash,
       accessTokenFromHash: accessTokenFromHash ? 'present' : 'missing',
-      refreshTokenFromHash: refreshTokenFromHash ? 'present' : 'missing'
+      refreshTokenFromHash: refreshTokenFromHash ? 'present' : 'missing',
+      actualToken: accessTokenFromHash ? accessTokenFromHash.substring(0, 20) + '...' : 'none'
     });
     
     if (type === 'recovery' && accessTokenFromHash) {
