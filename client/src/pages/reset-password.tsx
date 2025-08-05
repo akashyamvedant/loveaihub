@@ -161,14 +161,22 @@ export default function ResetPassword() {
     console.log('Page not ready, showing loading...');
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-slate-800 border-slate-700">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl text-white">Loading Reset Page...</CardTitle>
-            <CardDescription className="text-slate-400">
-              Preparing password reset form
-            </CardDescription>
-          </CardHeader>
-        </Card>
+        {/* Background glow effect */}
+        <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-purple-600/20 blur-xl scale-110"></div>
+        
+        {/* Main container with purple gradient border */}
+        <div className="relative">
+          {/* Gradient border */}
+          <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500 via-blue-500 to-purple-600 p-[2px]">
+            <div className="h-full w-full rounded-3xl bg-slate-900"></div>
+          </div>
+          
+          {/* Content */}
+          <div className="relative rounded-3xl bg-slate-900 p-8 w-full max-w-md text-center">
+            <h1 className="text-2xl font-bold text-white mb-2">Loading Reset Page...</h1>
+            <p className="text-slate-400">Preparing password reset form</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -176,110 +184,130 @@ export default function ResetPassword() {
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-slate-800 border-slate-700">
-          <CardHeader className="text-center">
+        {/* Background glow effect */}
+        <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-purple-600/20 blur-xl scale-110"></div>
+        
+        {/* Main container with purple gradient border */}
+        <div className="relative">
+          {/* Gradient border */}
+          <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500 via-blue-500 to-purple-600 p-[2px]">
+            <div className="h-full w-full rounded-3xl bg-slate-900"></div>
+          </div>
+          
+          {/* Content */}
+          <div className="relative rounded-3xl bg-slate-900 p-8 w-full max-w-md text-center">
             <div className="mx-auto w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-4">
               <CheckCircle className="w-8 h-8 text-white" />
             </div>
-            <CardTitle className="text-2xl text-white">Password Updated</CardTitle>
-            <CardDescription className="text-slate-400">
+            <h1 className="text-2xl font-bold text-white mb-2">Password Updated</h1>
+            <p className="text-slate-400">
               Your password has been successfully updated. You'll be redirected to the home page shortly.
-            </CardDescription>
-          </CardHeader>
-        </Card>
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-slate-800 border-slate-700">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center text-white">Reset Your Password</CardTitle>
-          <CardDescription className="text-center text-slate-400">
-            Enter your new password below
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-white">
-                New Password
-              </Label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  placeholder="Enter your new password"
-                  className="h-14 pl-12 pr-12 bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 rounded-xl"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 text-slate-400 hover:text-white"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
+      {/* Background glow effect */}
+      <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-purple-600/20 blur-xl scale-110"></div>
+      
+      {/* Main container with purple gradient border */}
+      <div className="relative">
+        {/* Gradient border */}
+        <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500 via-blue-500 to-purple-600 p-[2px]">
+          <div className="h-full w-full rounded-3xl bg-slate-900"></div>
+        </div>
+        
+        {/* Content */}
+        <div className="relative rounded-3xl bg-slate-900 p-8 w-full max-w-md">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-white mb-2">Reset Your Password</h1>
+            <p className="text-slate-400">Enter your new password below</p>
+          </div>
+          <div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium text-white">
+                  New Password
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    placeholder="Enter your new password"
+                    className="h-14 pl-12 pr-12 bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 rounded-xl"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 text-slate-400 hover:text-white"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-sm font-medium text-white">
-                Confirm New Password
-              </Label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                <Input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  placeholder="Confirm your new password"
-                  className="h-14 pl-12 pr-12 bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 rounded-xl"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 text-slate-400 hover:text-white"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-sm font-medium text-white">
+                  Confirm New Password
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    placeholder="Confirm your new password"
+                    className="h-14 pl-12 pr-12 bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 rounded-xl"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 text-slate-400 hover:text-white"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
-            </div>
 
-            <Button 
-              type="submit" 
-              disabled={isLoading || !accessToken}
-              className="w-full h-14 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold text-lg rounded-xl shadow-lg shadow-purple-500/25"
-            >
-              {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-              Update Password
-            </Button>
-
-            <div className="text-center">
-              <Button
-                type="button"
-                variant="link"
-                className="text-purple-400 hover:text-purple-300"
-                onClick={() => setLocation('/')}
+              <Button 
+                type="submit" 
+                disabled={isLoading || !accessToken}
+                className="w-full h-14 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold text-lg rounded-xl shadow-lg shadow-purple-500/25"
               >
-                Back to Home
+                {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+                Update Password
               </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+
+              <div className="text-center">
+                <Button
+                  type="button"
+                  variant="link"
+                  className="text-purple-400 hover:text-purple-300"
+                  onClick={() => setLocation('/')}
+                >
+                  Back to Home
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -251,7 +251,21 @@ app.post('/api/auth/update-password', async (req, res) => {
     }
 
     const token = authHeader.substring(7);
-    const { data, error } = await supabase.auth.updateUser({ password });
+    
+    // Create a supabase client with the user's token for authentication
+    const userSupabase = createClient(
+      process.env.VITE_SUPABASE_URL!,
+      process.env.VITE_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      }
+    );
+
+    const { data, error } = await userSupabase.auth.updateUser({ password });
 
     if (error) {
       return res.status(400).json({ message: error.message });
