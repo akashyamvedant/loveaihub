@@ -201,6 +201,24 @@ export async function setupAuth(app: Express) {
   });
 
   // Sign out endpoint
+  // Handle legacy GET /api/logout requests
+  app.get("/api/logout", async (req, res) => {
+    try {
+      // Clear session
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("Session destroy error:", err);
+        }
+      });
+      
+      // Redirect to landing page
+      res.redirect("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+      res.redirect("/?error=logout_failed");
+    }
+  });
+
   app.post("/api/auth/signout", async (req, res) => {
     try {
       const sessionUser = (req.session as any).user;
@@ -228,7 +246,7 @@ export async function setupAuth(app: Express) {
         }
       });
 
-      res.json({ message: "Signed out successfully" });
+      res.json({ message: "Signed out successfully", redirect: "/" });
     } catch (error) {
       console.error("Signout error:", error);
       res.status(500).json({ message: "Internal server error" });

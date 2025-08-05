@@ -163,11 +163,28 @@ export default function Navbar() {
                     )}
                     
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <a href="/api/logout" className="cursor-pointer text-destructive">
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Sign Out
-                      </a>
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        const signOut = async () => {
+                          try {
+                            const response = await fetch('/api/auth/signout', {
+                              method: 'POST',
+                              credentials: 'include',
+                              headers: { 'Content-Type': 'application/json' }
+                            });
+                            if (response.ok) {
+                              window.location.href = '/';
+                            }
+                          } catch (error) {
+                            console.error('Logout error:', error);
+                          }
+                        };
+                        signOut();
+                      }}
+                      className="cursor-pointer text-destructive"
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

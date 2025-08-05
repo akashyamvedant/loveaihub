@@ -116,6 +116,20 @@ app.post('/api/auth/signin', async (req, res) => {
   }
 });
 
+// Handle legacy GET /api/logout requests
+app.get('/api/logout', async (req, res) => {
+  try {
+    // Clear any auth cookies
+    res.clearCookie('supabase-auth-token', { domain: '.loveaihub.com' });
+    
+    // Redirect to landing page
+    res.redirect('https://www.loveaihub.com/');
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.redirect('https://www.loveaihub.com/?error=logout_failed');
+  }
+});
+
 app.post('/api/auth/signout', async (req, res) => {
   try {
     const { error } = await supabase.auth.signOut();
@@ -124,7 +138,7 @@ app.post('/api/auth/signout', async (req, res) => {
       return res.status(400).json({ message: error.message });
     }
 
-    res.json({ message: 'Signed out successfully' });
+    res.json({ message: 'Signed out successfully', redirect: '/' });
   } catch (error) {
     console.error('Signout error:', error);
     res.status(500).json({ message: 'Internal server error' });

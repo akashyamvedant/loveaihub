@@ -109,8 +109,19 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   ];
 
-  const handleLogout = () => {
-    window.location.href = "/api/logout";
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/auth/signout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (response.ok) {
+        window.location.href = '/';
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   const isActive = (href: string) => {
