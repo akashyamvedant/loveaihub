@@ -16,10 +16,17 @@ export default function ResetPassword() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
+  const [isPageReady, setIsPageReady] = useState(false);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
+  // Debug: Add page load indicator
+  console.log('ResetPassword component mounted');
+
   useEffect(() => {
+    console.log('Reset password useEffect triggered');
+    setIsPageReady(true);
+    
     // Parse URL fragments for Supabase tokens
     const hash = window.location.hash.substring(1);
     const search = window.location.search.substring(1);
@@ -41,23 +48,26 @@ export default function ResetPassword() {
     });
     
     if (type === 'recovery' && accessTokenFromHash) {
+      console.log('Valid recovery tokens found');
       setAccessToken(accessTokenFromHash);
       setRefreshToken(refreshTokenFromHash);
       
       // Clean up URL to remove sensitive tokens
       window.history.replaceState({}, document.title, '/reset-password');
       
-      toast({
-        title: "Reset Link Valid",
-        description: "You can now set your new password.",
-      });
+      setTimeout(() => {
+        toast({
+          title: "Reset Link Valid",
+          description: "You can now set your new password.",
+        });
+      }, 500);
     } else if (!type && !accessTokenFromHash) {
       // Show debug information and allow user to proceed if they have tokens
       console.log('No tokens found in URL - this might be a direct visit or the tokens were cleared');
-      // Don't redirect immediately - let user see the page
+      // Always show the page, just indicate the issue
       setTimeout(() => {
         toast({
-          title: "Invalid Reset Link",
+          title: "Invalid Reset Link", 
           description: "This password reset link appears to be invalid. Please use the link from your email.",
           variant: "destructive",
         });
@@ -65,11 +75,13 @@ export default function ResetPassword() {
     } else {
       // Invalid tokens
       console.log('Invalid reset link detected');
-      toast({
-        title: "Invalid Reset Link",
-        description: "This password reset link is invalid or has expired. Please request a new one.",
-        variant: "destructive",
-      });
+      setTimeout(() => {
+        toast({
+          title: "Invalid Reset Link",
+          description: "This password reset link is invalid or has expired. Please request a new one.",
+          variant: "destructive",
+        });
+      }, 1000);
       setTimeout(() => setLocation('/'), 5000);
     }
   }, [toast, setLocation]);
@@ -143,6 +155,23 @@ export default function ResetPassword() {
       setIsLoading(false);
     }
   };
+
+  // Always show loading state first to debug blank screen
+  if (!isPageReady) {
+    console.log('Page not ready, showing loading...');
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-slate-800 border-slate-700">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl text-white">Loading Reset Page...</CardTitle>
+            <CardDescription className="text-slate-400">
+              Preparing password reset form
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
 
   if (isSuccess) {
     return (

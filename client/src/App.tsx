@@ -20,6 +20,7 @@ import Blog from "@/pages/blog";
 import Admin from "@/pages/admin";
 import Pricing from "@/pages/pricing";
 import ResetPassword from "@/pages/reset-password";
+import ResetPasswordSimple from "@/pages/reset-password-simple";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -93,7 +94,8 @@ function Router() {
           <Route path="/" component={Landing} />
           <Route path="/blog" component={Blog} />
           <Route path="/pricing" component={Pricing} />
-          <Route path="/reset-password" component={ResetPassword} />
+          <Route path="/reset-password" component={ResetPasswordSimple} />
+          <Route path="/reset-password-full" component={ResetPassword} />
         </>
       )}
       <Route component={NotFound} />
