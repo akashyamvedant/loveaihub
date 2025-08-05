@@ -30,8 +30,10 @@ export function getSession() {
   try {
     const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
     
-    // Only create PG store if DATABASE_URL is available
-    if (!process.env.DATABASE_URL) {
+    // Use DATABASE_URL with fallback value
+    const databaseUrl = process.env.DATABASE_URL || 'postgresql://postgres.gfrpidhedgqixkgafumc:[AKraj@$5630]@aws-0-ap-south-1.pooler.supabase.com:6543/postgres';
+    
+    if (!databaseUrl) {
       console.warn("DATABASE_URL not available, using memory store");
       const MemoryStore = session.MemoryStore;
       return session({
@@ -49,7 +51,7 @@ export function getSession() {
     
     const pgStore = connectPg(session);
     const sessionStore = new pgStore({
-      conString: process.env.DATABASE_URL,
+      conString: databaseUrl,
       createTableIfMissing: false,
       ttl: sessionTtl,
       tableName: "sessions",
@@ -204,18 +206,17 @@ export async function setupAuth(app: Express) {
       const sessionUser = (req.session as any).user;
       
       if (sessionUser?.access_token) {
-        // Create a supabase client with the user's token
-        const userSupabase = createClient(
-          process.env.SUPABASE_URL!,
-          process.env.SUPABASE_ANON_KEY!,
-          {
-            global: {
-              headers: {
-                Authorization: `Bearer ${sessionUser.access_token}`
-              }
+        // Create a supabase client with the user's token using fallback values
+        const supabaseUrl = process.env.SUPABASE_URL || 'https://gfrpidhedgqixkgafumc.supabase.co';
+        const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcnBpZGhlZGdxaXhrZ2FmdW1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1ODM0NjgsImV4cCI6MjA2OTE1OTQ2OH0.JaYdiISBG8vqfen_qzkOVgYRBq4V2v5CzvxjhBBsM9c';
+        
+        const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+          global: {
+            headers: {
+              Authorization: `Bearer ${sessionUser.access_token}`
             }
           }
-        );
+        });
         
         await userSupabase.auth.signOut();
       }
@@ -444,10 +445,13 @@ export async function setupAuth(app: Express) {
 
       const { code, error: oauthError, access_token, refresh_token } = req.query;
 
+      // Get the current environment base URL
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      
       // Handle OAuth error responses
       if (oauthError) {
         console.error('OAuth error from provider:', oauthError);
-        return res.redirect(`/?error=${encodeURIComponent(oauthError.toString())}&fallback=email`);
+        return res.redirect(`${baseUrl}/?error=${encodeURIComponent(oauthError.toString())}&fallback=email`);
       }
 
       // Handle direct token response (implicit flow)
@@ -459,7 +463,7 @@ export async function setupAuth(app: Express) {
           sameSite: 'lax',
           maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
         });
-        return res.redirect("/?auth=success");
+        return res.redirect(`${baseUrl}/?auth=success`);
       }
 
       // Handle authorization code flow
@@ -472,10 +476,10 @@ export async function setupAuth(app: Express) {
         
         if (referer && referer.includes('accounts.google.com')) {
           // User came from Google but no code received - redirect to email signup
-          return res.redirect("/?auth=fallback&message=" + encodeURIComponent("Google sign-in temporarily unavailable. Please use email registration."));
+          return res.redirect(`${baseUrl}/?auth=fallback&message=` + encodeURIComponent("Google sign-in temporarily unavailable. Please use email registration."));
         }
         
-        return res.redirect("/?error=missing_auth_data&fallback=email");
+        return res.redirect(`${baseUrl}/?error=missing_auth_data&fallback=email`);
       }
 
       console.log('Exchanging code for session:', code);
@@ -518,10 +522,11 @@ export async function setupAuth(app: Express) {
       }
 
       // Redirect to home page with success parameter
-      res.redirect("/?auth=success");
+      res.redirect(`${baseUrl}/?auth=success`);
     } catch (error: any) {
       console.error('OAuth callback error:', error);
-      res.redirect(`/?error=${encodeURIComponent(error.message || 'authentication_error')}`);
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      res.redirect(`${baseUrl}/?error=${encodeURIComponent(error.message || 'authentication_error')}`);
     }
   });
   
