@@ -133,15 +133,34 @@ app.post('/api/auth/signout', async (req, res) => {
 
 app.get('/api/auth/user', async (req, res) => {
   try {
+    let token: string | null = null;
+    
+    // First try to get token from Authorization header
     const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
+    if (authHeader?.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
+    }
+    
+    // If no Authorization header, try to get token from cookies
+    if (!token && req.headers.cookie) {
+      const cookies = req.headers.cookie.split(';');
+      for (const cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'supabase-auth-token') {
+          token = value;
+          break;
+        }
+      }
+    }
+    
+    if (!token) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    const token = authHeader.substring(7);
     const { data: { user }, error } = await supabase.auth.getUser(token);
 
     if (error || !user) {
+      console.error('Token verification failed:', error);
       return res.status(401).json({ message: 'Unauthorized' });
     }
 

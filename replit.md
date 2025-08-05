@@ -183,6 +183,9 @@ The database schema supports multi-tenant usage tracking, generation history, an
   - **SOLUTION**: Implemented client-side hash fragment processing for Supabase implicit OAuth flow
   - **ENHANCED**: Added /api/auth/process-token endpoint for secure token verification and cookie setting
   - **IMPROVED**: OAuth callback now handles both server-side code flow and client-side implicit flow
+  - **RESOLVED**: Fixed 404 NOT_FOUND error on /home redirect by adding route for authenticated users
+  - **ENHANCED**: Updated authentication API to support both Authorization header and cookie-based tokens
+  - **COMPLETED**: Google OAuth authentication now fully functional with proper dashboard redirect
   - Fixed local environment OAuth redirect URLs to use localhost:5000 instead of production URLs
   - Implemented fallback environment variable system ensuring local development works seamlessly
   - Enhanced session management with PostgreSQL database connection and memory store fallback

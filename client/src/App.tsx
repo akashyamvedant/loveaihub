@@ -53,6 +53,13 @@ function Router() {
   // Show authenticated routes if user has token OR is authenticated
   const hasAuth = authStorage.hasAuth() || isAuthenticated;
   
+  // Force auth refresh when landing on /home after OAuth
+  useEffect(() => {
+    if (window.location.pathname === '/home' && authStorage.hasAuth() && !isAuthenticated && !isLoading) {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    }
+  }, [isAuthenticated, isLoading]);
+  
   return (
     <Switch>
       {isLoading ? (
@@ -66,6 +73,7 @@ function Router() {
       ) : hasAuth ? (
         <>
           <Route path="/" component={Home} />
+          <Route path="/home" component={Home} />
           <Route path="/image-generation" component={ImageGeneration} />
           <Route path="/video-generation" component={VideoGeneration} />
           <Route path="/ai-chat" component={AiChat} />
