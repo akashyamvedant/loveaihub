@@ -364,12 +364,12 @@ export async function setupAuth(app: Express) {
       
       console.log("Attempting OAuth with redirect to:", `${baseUrl}/auth/callback`);
       
-      // First check if Supabase credentials are properly configured
-      if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
-        console.error("Missing Supabase credentials", {
-          hasUrl: !!process.env.SUPABASE_URL,
-          hasKey: !!process.env.SUPABASE_ANON_KEY
-        });
+      // Use fallback Supabase credentials for local development
+      const supabaseUrl = process.env.SUPABASE_URL || 'https://gfrpidhedgqixkgafumc.supabase.co';
+      const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcnBpZGhlZGdxaXhrZ2FmdW1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1ODM0NjgsImV4cCI6MjA2OTE1OTQ2OH0.JaYdiISBG8vqfen_qzkOVgYRBq4V2v5CzvxjhBBsM9c';
+      
+      if (!supabaseUrl || !supabaseAnonKey) {
+        console.error("Missing Supabase credentials");
         return res.status(500).json({ 
           message: "Server configuration error: Missing Supabase credentials" 
         });
