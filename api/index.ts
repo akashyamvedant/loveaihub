@@ -163,15 +163,15 @@ app.post('/api/auth/google', async (req, res) => {
     
     console.log('Attempting OAuth with redirect to:', callbackUrl);
     
+    // Use Supabase's built-in OAuth handling with proper redirect flow
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: callbackUrl,
+        redirectTo: `https://www.loveaihub.com/auth/callback`,
         scopes: 'openid email profile',
         queryParams: {
           access_type: 'offline',
-          prompt: 'select_account',
-          response_type: 'code' // Force authorization code flow
+          prompt: 'select_account'
         }
       }
     });
@@ -229,7 +229,56 @@ app.post('/api/auth/update-password', async (req, res) => {
   }
 });
 
-// OAuth callback endpoint - CRITICAL for Google OAuth to work
+// Process OAuth tokens from client-side (handles hash fragment tokens)
+app.post('/api/auth/process-token', async (req, res) => {
+  try {
+    const { access_token, refresh_token } = req.body;
+    console.log('Processing OAuth tokens from client-side');
+    
+    if (!access_token) {
+      return res.status(400).json({ message: 'Missing access token' });
+    }
+
+    // Verify the token with Supabase
+    const { data: { user }, error: userError } = await supabase.auth.getUser(access_token);
+    
+    if (userError || !user) {
+      console.error('Token verification failed:', userError);
+      return res.status(400).json({ message: 'Invalid token' });
+    }
+
+    console.log('Token verified successfully for user:', user.email);
+    
+    // Set secure cookies for the verified tokens
+    res.cookie('supabase-auth-token', access_token, {
+      httpOnly: false, // Allow frontend access
+      secure: true, // HTTPS only
+      sameSite: 'lax',
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+      domain: '.loveaihub.com'
+    });
+
+    if (refresh_token) {
+      res.cookie('supabase-refresh-token', refresh_token, {
+        httpOnly: true, // More secure for refresh tokens
+        secure: true,
+        sameSite: 'lax',
+        maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
+        domain: '.loveaihub.com'
+      });
+    }
+
+    res.json({ 
+      message: 'Authentication successful',
+      user: user
+    });
+  } catch (error) {
+    console.error('Token processing error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// OAuth callback endpoint - handles both code and token flows
 app.get('/auth/callback', async (req, res) => {
   try {
     console.log('OAuth callback received:', {
@@ -240,45 +289,71 @@ app.get('/auth/callback', async (req, res) => {
       fullUrl: req.protocol + '://' + req.get('host') + req.originalUrl
     });
 
-    // Check URL hash fragments first (Supabase often returns tokens in fragments)
-    const urlParts = req.url?.split('#') || [];
-    if (urlParts.length > 1) {
-      const fragmentParams = new URLSearchParams(urlParts[1]);
-      const fragmentToken = fragmentParams.get('access_token');
-      const fragmentRefresh = fragmentParams.get('refresh_token');
-      
-      if (fragmentToken) {
-        console.log('Found tokens in URL fragments');
-        res.cookie('supabase-auth-token', fragmentToken, {
-          httpOnly: false,
-          secure: true,
-          sameSite: 'lax',
-          maxAge: 1000 * 60 * 60 * 24 * 7,
-          domain: '.loveaihub.com'
-        });
-        return res.redirect("https://www.loveaihub.com/?auth=success");
-      }
-    }
+    // Handle both query parameters and URL fragments
+    const { 
+      code, 
+      access_token, 
+      refresh_token, 
+      expires_in, 
+      token_type,
+      error: oauthError,
+      error_description 
+    } = req.query;
 
-    const { code, error: oauthError, access_token, refresh_token } = req.query;
+    console.log('Extracted OAuth parameters:', {
+      hasCode: !!code,
+      hasAccessToken: !!access_token,
+      hasRefreshToken: !!refresh_token,
+      hasError: !!oauthError,
+      errorDescription: error_description
+    });
 
     // Handle OAuth error responses
     if (oauthError) {
-      console.error('OAuth error from provider:', oauthError);
+      console.error('OAuth error from provider:', { oauthError, error_description });
       return res.redirect(`https://www.loveaihub.com/?error=${encodeURIComponent(oauthError.toString())}`);
     }
 
-    // Handle direct token response (implicit flow)
+    // Handle direct token response (implicit flow) - This is what Supabase typically uses
     if (access_token) {
-      console.log('Direct token received, setting cookie');
-      res.cookie('supabase-auth-token', access_token.toString(), {
-        httpOnly: false, // Allow frontend access
-        secure: true, // HTTPS only
-        sameSite: 'lax',
-        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-        domain: '.loveaihub.com'
-      });
-      return res.redirect("https://www.loveaihub.com/?auth=success");
+      console.log('Direct token received from Supabase OAuth, processing...');
+      
+      try {
+        // Verify the token with Supabase
+        const { data: { user }, error: userError } = await supabase.auth.getUser(access_token.toString());
+        
+        if (userError || !user) {
+          console.error('Token verification failed:', userError);
+          return res.redirect("https://www.loveaihub.com/?error=invalid_token");
+        }
+
+        console.log('Token verified successfully for user:', user.email);
+        
+        // Set secure cookie with the verified token
+        res.cookie('supabase-auth-token', access_token.toString(), {
+          httpOnly: false, // Allow frontend access
+          secure: true, // HTTPS only
+          sameSite: 'lax',
+          maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+          domain: '.loveaihub.com'
+        });
+
+        // Also set refresh token if available
+        if (refresh_token) {
+          res.cookie('supabase-refresh-token', refresh_token.toString(), {
+            httpOnly: true, // More secure for refresh tokens
+            secure: true,
+            sameSite: 'lax',
+            maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
+            domain: '.loveaihub.com'
+          });
+        }
+
+        return res.redirect("https://www.loveaihub.com/?auth=success");
+      } catch (tokenError) {
+        console.error('Error processing token:', tokenError);
+        return res.redirect("https://www.loveaihub.com/?error=token_processing_failed");
+      }
     }
 
     // Handle authorization code flow
@@ -325,64 +400,113 @@ app.get('/auth/callback', async (req, res) => {
         return res.redirect("https://www.loveaihub.com/?auth=success");
       }
       
-      // Create detailed error page with debugging information
-      const debugInfo = {
-        timestamp: new Date().toISOString(),
-        query: req.query,
-        url: req.url,
-        headers: req.headers,
-        method: req.method
-      };
+      // Handle potential hash fragment tokens (client-side implicit flow)
+      // Since server cannot access hash fragments, return a page that processes them client-side
+      console.error('No query parameters received, checking for hash fragments');
       
-      console.error('CRITICAL: No auth data received in OAuth callback');
-      console.error('Debug info:', JSON.stringify(debugInfo, null, 2));
-      
-      // Return detailed error for debugging
-      return res.status(400).send(`
+      return res.send(`
         <html>
           <head>
-            <title>OAuth Debug - Missing Auth Data</title>
+            <title>Processing OAuth...</title>
             <style>
-              body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
-              .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-              .error { color: #d32f2f; background: #ffebee; padding: 15px; border-radius: 4px; margin: 15px 0; }
-              .debug { background: #f5f5f5; padding: 15px; border-radius: 4px; margin: 15px 0; overflow-x: auto; }
-              pre { margin: 0; white-space: pre-wrap; }
-              .action { background: #e3f2fd; padding: 15px; border-radius: 4px; margin: 15px 0; }
+              body { 
+                font-family: Arial, sans-serif; 
+                margin: 40px; 
+                background: #f5f5f5; 
+                text-align: center; 
+              }
+              .container { 
+                background: white; 
+                padding: 40px; 
+                border-radius: 8px; 
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+                max-width: 600px;
+                margin: 0 auto;
+              }
+              .loading { 
+                color: #1976d2; 
+                font-size: 18px; 
+                margin: 20px 0; 
+              }
+              .spinner {
+                border: 4px solid #f3f3f3;
+                border-top: 4px solid #1976d2;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+                margin: 20px auto;
+              }
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
             </style>
           </head>
           <body>
             <div class="container">
-              <h1>🔍 OAuth Configuration Debug</h1>
-              <div class="error">
-                <strong>Error:</strong> No authorization code or access token received from Google OAuth
-              </div>
-              
-              <h3>Possible Causes:</h3>
-              <ul>
-                <li><strong>Supabase Redirect URLs:</strong> Check if https://www.loveaihub.com/auth/callback is configured</li>
-                <li><strong>Google OAuth Settings:</strong> Verify redirect URIs in Google Cloud Console</li>
-                <li><strong>Flow Type:</strong> Supabase might be using implicit flow instead of authorization code flow</li>
-              </ul>
-              
-              <div class="debug">
-                <strong>Debug Information:</strong>
-                <pre>${JSON.stringify(debugInfo, null, 2)}</pre>
-              </div>
-              
-              <div class="action">
-                <strong>Next Steps:</strong>
-                <ol>
-                  <li>Verify Supabase Authentication settings</li>
-                  <li>Check Google OAuth consent screen configuration</li>
-                  <li>Ensure redirect URLs exactly match</li>
-                </ol>
-              </div>
-              
-              <p>
-                <a href="https://www.loveaihub.com" style="background: #1976d2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">← Back to LoveAIHub</a>
-              </p>
+              <h1>🔄 Processing Authentication...</h1>
+              <div class="spinner"></div>
+              <div class="loading">Checking for OAuth tokens...</div>
+              <div id="status">Analyzing authentication data...</div>
             </div>
+            
+            <script>
+              console.log('OAuth callback processor loaded');
+              console.log('Current URL:', window.location.href);
+              console.log('Hash fragment:', window.location.hash);
+              console.log('Search params:', window.location.search);
+              
+              // Check for tokens in hash fragment (Supabase implicit flow)
+              const hash = window.location.hash.substring(1);
+              const params = new URLSearchParams(hash);
+              const access_token = params.get('access_token');
+              const refresh_token = params.get('refresh_token');
+              const error = params.get('error');
+              const error_description = params.get('error_description');
+              
+              console.log('Extracted from hash:', {
+                access_token: !!access_token,
+                refresh_token: !!refresh_token,
+                error: error,
+                error_description: error_description
+              });
+              
+              if (error) {
+                document.getElementById('status').innerHTML = 'Authentication failed: ' + error;
+                setTimeout(() => {
+                  window.location.href = 'https://www.loveaihub.com/?error=' + encodeURIComponent(error);
+                }, 2000);
+              } else if (access_token) {
+                document.getElementById('status').innerHTML = 'Authentication successful! Redirecting...';
+                
+                // Send tokens to server for processing
+                fetch('/api/auth/process-token', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    access_token: access_token,
+                    refresh_token: refresh_token
+                  })
+                }).then(response => {
+                  if (response.ok) {
+                    window.location.href = 'https://www.loveaihub.com/?auth=success';
+                  } else {
+                    window.location.href = 'https://www.loveaihub.com/?error=token_processing_failed';
+                  }
+                }).catch(err => {
+                  console.error('Token processing error:', err);
+                  window.location.href = 'https://www.loveaihub.com/?error=network_error';
+                });
+              } else {
+                document.getElementById('status').innerHTML = 'No authentication data found';
+                setTimeout(() => {
+                  window.location.href = 'https://www.loveaihub.com/?error=missing_auth_data';
+                }, 3000);
+              }
+            </script>
           </body>
         </html>
       `);
