@@ -29,8 +29,24 @@
       "dest": "/api/index.ts"
     },
     {
-      "src": "/(.*)",
+      "src": "/reset-password",
+      "dest": "/dist/public/index.html"
+    },
+    {
+      "src": "/blog",
+      "dest": "/dist/public/index.html"
+    },
+    {
+      "src": "/pricing",
+      "dest": "/dist/public/index.html"
+    },
+    {
+      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot))",
       "dest": "/dist/public/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/dist/public/index.html"
     }
   ]
 }
