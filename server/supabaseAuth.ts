@@ -350,20 +350,38 @@ export async function setupAuth(app: Express) {
 
         console.log("Setting session with access token...");
         
-        // Set the session explicitly for password reset tokens
+        // Try different approaches for password reset token handling
+        
+        // Approach 1: Try setSession first
+        let userSupabaseClient = userSupabase;
         const { data: sessionData, error: sessionError } = await userSupabase.auth.setSession({
           access_token: token,
           refresh_token: '' // Not needed for password reset
         });
 
         if (sessionError) {
-          console.error("Session setup error:", sessionError);
-          return res.status(401).json({ message: `Invalid or expired reset token: ${sessionError.message}` });
+          console.error("Session setup error, trying alternative approach:", sessionError);
+          
+          // Approach 2: Try creating client with token directly in auth headers
+          userSupabaseClient = createClient(
+            process.env.SUPABASE_URL || 'https://gfrpidhedgqixkgafumc.supabase.co',
+            process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcnBpZGhlZGdxaXhrZ2FmdW1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1ODM0NjgsImV4cCI6MjA2OTE1OTQ2OH0.JaYdiISBG8vqfen_qzkOVgYRBq4V2v5CzvxjhBBsM9c',
+            {
+              auth: {
+                persistSession: false
+              },
+              global: {
+                headers: {
+                  Authorization: `Bearer ${token}`
+                }
+              }
+            }
+          );
+        } else {
+          console.log("Session established for user:", sessionData.user?.email);
         }
 
-        console.log("Session established for user:", sessionData.user?.email);
-
-        const { error } = await userSupabase.auth.updateUser({ password });
+        const { error } = await userSupabaseClient.auth.updateUser({ password });
 
         if (error) {
           return res.status(400).json({ message: error.message });
