@@ -179,6 +179,7 @@ The database schema supports multi-tenant usage tracking, generation history, an
   - Enhanced OAuth callback with comprehensive debugging and implicit flow token handling
   - Forced authorization code flow with `response_type: 'code'` parameter
   - Created detailed OAuth debug page showing exact callback data for troubleshooting
+  - **CONFIRMED**: OAuth callback receiving empty query object {} - Supabase redirect URL configuration mismatch
   - **REQUIRES**: User to update Supabase redirect URLs to https://www.loveaihub.com/auth/callback
   - Fixed local environment OAuth redirect URLs to use localhost:5000 instead of production URLs
   - Implemented fallback environment variable system ensuring local development works seamlessly
