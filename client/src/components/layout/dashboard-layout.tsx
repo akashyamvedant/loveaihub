@@ -111,16 +111,22 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const handleLogout = async () => {
     try {
+      // Clear local auth data first
+      localStorage.removeItem('supabase-auth-token');
+      document.cookie = 'supabase-auth-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Domain=.loveaihub.com';
+      
       const response = await fetch('/api/auth/signout', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' }
       });
-      if (response.ok) {
-        window.location.href = '/';
-      }
+      
+      // Force complete page reload to reset all state
+      window.location.replace('/');
     } catch (error) {
       console.error('Logout error:', error);
+      // Force reload even on error to clear state
+      window.location.replace('/');
     }
   };
 

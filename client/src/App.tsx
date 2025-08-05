@@ -50,8 +50,9 @@ function Router() {
     }
   }, [toast]);
 
-  // Show authenticated routes if user has token OR is authenticated
-  const hasAuth = authStorage.hasAuth() || isAuthenticated;
+  // Show authenticated routes only if both conditions are true
+  // After logout, both should be false
+  const hasAuth = authStorage.hasAuth() && (isAuthenticated || isLoading);
   
   // Force auth refresh when landing on /home after OAuth
   useEffect(() => {

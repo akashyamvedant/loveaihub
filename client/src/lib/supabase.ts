@@ -102,6 +102,9 @@ export const authApi = {
   },
 
   async signOut() {
+    // Clear any stored tokens first
+    authStorage.removeToken();
+    
     const response = await fetch('/api/auth/signout', {
       method: 'POST',
       credentials: 'include', // Include cookies in request
@@ -110,13 +113,15 @@ export const authApi = {
       },
     });
 
-    // Clear any stored tokens
-    authStorage.removeToken();
-
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.message || 'Sign out failed');
     }
+
+    // Force page reload to clear all state
+    setTimeout(() => {
+      window.location.replace('/');
+    }, 100);
 
     return response.json();
   },
