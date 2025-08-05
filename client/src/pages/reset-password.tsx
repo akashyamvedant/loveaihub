@@ -22,13 +22,23 @@ export default function ResetPassword() {
   useEffect(() => {
     // Parse URL fragments for Supabase tokens
     const hash = window.location.hash.substring(1);
-    const params = new URLSearchParams(hash);
+    const search = window.location.search.substring(1);
+    const hashParams = new URLSearchParams(hash);
+    const searchParams = new URLSearchParams(search);
     
-    const accessTokenFromHash = params.get('access_token');
-    const refreshTokenFromHash = params.get('refresh_token');
-    const type = params.get('type');
+    const accessTokenFromHash = hashParams.get('access_token') || searchParams.get('access_token');
+    const refreshTokenFromHash = hashParams.get('refresh_token') || searchParams.get('refresh_token');
+    const type = hashParams.get('type') || searchParams.get('type');
     
-    console.log('Reset password page - URL params:', { type, hasAccessToken: !!accessTokenFromHash });
+    console.log('Reset password page - Full URL:', window.location.href);
+    console.log('Reset password page - Hash:', hash);
+    console.log('Reset password page - Search:', search);
+    console.log('Reset password page - Parsed params:', { 
+      type, 
+      hasAccessToken: !!accessTokenFromHash,
+      accessTokenFromHash: accessTokenFromHash ? 'present' : 'missing',
+      refreshTokenFromHash: refreshTokenFromHash ? 'present' : 'missing'
+    });
     
     if (type === 'recovery' && accessTokenFromHash) {
       setAccessToken(accessTokenFromHash);
@@ -36,14 +46,31 @@ export default function ResetPassword() {
       
       // Clean up URL to remove sensitive tokens
       window.history.replaceState({}, document.title, '/reset-password');
+      
+      toast({
+        title: "Reset Link Valid",
+        description: "You can now set your new password.",
+      });
+    } else if (!type && !accessTokenFromHash) {
+      // Show debug information and allow user to proceed if they have tokens
+      console.log('No tokens found in URL - this might be a direct visit or the tokens were cleared');
+      // Don't redirect immediately - let user see the page
+      setTimeout(() => {
+        toast({
+          title: "Invalid Reset Link",
+          description: "This password reset link appears to be invalid. Please use the link from your email.",
+          variant: "destructive",
+        });
+      }, 1000);
     } else {
-      // No valid tokens found
+      // Invalid tokens
+      console.log('Invalid reset link detected');
       toast({
         title: "Invalid Reset Link",
         description: "This password reset link is invalid or has expired. Please request a new one.",
         variant: "destructive",
       });
-      setTimeout(() => setLocation('/'), 3000);
+      setTimeout(() => setLocation('/'), 5000);
     }
   }, [toast, setLocation]);
 

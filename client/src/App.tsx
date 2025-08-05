@@ -53,7 +53,9 @@ function Router() {
 
   // Show authenticated routes only if both conditions are true
   // After logout, both should be false
-  const hasAuth = authStorage.hasAuth() && (isAuthenticated || isLoading);
+  // Special case: Always allow reset-password page regardless of auth state
+  const isResetPasswordPage = window.location.pathname === '/reset-password';
+  const hasAuth = !isResetPasswordPage && authStorage.hasAuth() && (isAuthenticated || isLoading);
   
   // Force auth refresh when landing on /home after OAuth
   useEffect(() => {
