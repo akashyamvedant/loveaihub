@@ -157,8 +157,9 @@ app.post('/api/auth/google', async (req, res) => {
     const { redirectUrl } = req.body;
     console.log('Google OAuth request received:', { redirectUrl });
     
-    // Always use production callback URL for consistency
-    const callbackUrl = 'https://www.loveaihub.com/auth/callback';
+    // Use the exact redirect URL that matches Supabase configuration
+    const baseUrl = redirectUrl || 'https://www.loveaihub.com';
+    const callbackUrl = `${baseUrl}/auth/callback`;
     
     console.log('Attempting OAuth with redirect to:', callbackUrl);
     
@@ -169,7 +170,8 @@ app.post('/api/auth/google', async (req, res) => {
         scopes: 'openid email profile',
         queryParams: {
           access_type: 'offline',
-          prompt: 'select_account'
+          prompt: 'select_account',
+          response_type: 'code' // Force authorization code flow
         }
       }
     });
@@ -233,8 +235,30 @@ app.get('/auth/callback', async (req, res) => {
     console.log('OAuth callback received:', {
       query: req.query,
       headers: req.headers,
-      url: req.url
+      url: req.url,
+      method: req.method,
+      fullUrl: req.protocol + '://' + req.get('host') + req.originalUrl
     });
+
+    // Check URL hash fragments first (Supabase often returns tokens in fragments)
+    const urlParts = req.url?.split('#') || [];
+    if (urlParts.length > 1) {
+      const fragmentParams = new URLSearchParams(urlParts[1]);
+      const fragmentToken = fragmentParams.get('access_token');
+      const fragmentRefresh = fragmentParams.get('refresh_token');
+      
+      if (fragmentToken) {
+        console.log('Found tokens in URL fragments');
+        res.cookie('supabase-auth-token', fragmentToken, {
+          httpOnly: false,
+          secure: true,
+          sameSite: 'lax',
+          maxAge: 1000 * 60 * 60 * 24 * 7,
+          domain: '.loveaihub.com'
+        });
+        return res.redirect("https://www.loveaihub.com/?auth=success");
+      }
+    }
 
     const { code, error: oauthError, access_token, refresh_token } = req.query;
 
@@ -301,7 +325,67 @@ app.get('/auth/callback', async (req, res) => {
         return res.redirect("https://www.loveaihub.com/?auth=success");
       }
       
-      return res.redirect("https://www.loveaihub.com/?error=missing_auth_data");
+      // Create detailed error page with debugging information
+      const debugInfo = {
+        timestamp: new Date().toISOString(),
+        query: req.query,
+        url: req.url,
+        headers: req.headers,
+        method: req.method
+      };
+      
+      console.error('CRITICAL: No auth data received in OAuth callback');
+      console.error('Debug info:', JSON.stringify(debugInfo, null, 2));
+      
+      // Return detailed error for debugging
+      return res.status(400).send(`
+        <html>
+          <head>
+            <title>OAuth Debug - Missing Auth Data</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
+              .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+              .error { color: #d32f2f; background: #ffebee; padding: 15px; border-radius: 4px; margin: 15px 0; }
+              .debug { background: #f5f5f5; padding: 15px; border-radius: 4px; margin: 15px 0; overflow-x: auto; }
+              pre { margin: 0; white-space: pre-wrap; }
+              .action { background: #e3f2fd; padding: 15px; border-radius: 4px; margin: 15px 0; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>🔍 OAuth Configuration Debug</h1>
+              <div class="error">
+                <strong>Error:</strong> No authorization code or access token received from Google OAuth
+              </div>
+              
+              <h3>Possible Causes:</h3>
+              <ul>
+                <li><strong>Supabase Redirect URLs:</strong> Check if https://www.loveaihub.com/auth/callback is configured</li>
+                <li><strong>Google OAuth Settings:</strong> Verify redirect URIs in Google Cloud Console</li>
+                <li><strong>Flow Type:</strong> Supabase might be using implicit flow instead of authorization code flow</li>
+              </ul>
+              
+              <div class="debug">
+                <strong>Debug Information:</strong>
+                <pre>${JSON.stringify(debugInfo, null, 2)}</pre>
+              </div>
+              
+              <div class="action">
+                <strong>Next Steps:</strong>
+                <ol>
+                  <li>Verify Supabase Authentication settings</li>
+                  <li>Check Google OAuth consent screen configuration</li>
+                  <li>Ensure redirect URLs exactly match</li>
+                </ol>
+              </div>
+              
+              <p>
+                <a href="https://www.loveaihub.com" style="background: #1976d2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">← Back to LoveAIHub</a>
+              </p>
+            </div>
+          </body>
+        </html>
+      `);
     }
 
     console.log('Exchanging code for session:', code);
