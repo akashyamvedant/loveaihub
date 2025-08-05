@@ -29,13 +29,16 @@
       "dest": "/api/index.ts"
     },
     {
-      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|map))",
-      "dest": "/dist/public/$1"
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1"
     },
     {
-      "src": "/[^.]+",
-      "dest": "/dist/public/index.html",
-      "status": 200
+      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|map))",
+      "dest": "/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }

@@ -94,8 +94,7 @@ function Router() {
           <Route path="/" component={Landing} />
           <Route path="/blog" component={Blog} />
           <Route path="/pricing" component={Pricing} />
-          <Route path="/reset-password" component={ResetPasswordSimple} />
-          <Route path="/reset-password-full" component={ResetPassword} />
+          <Route path="/reset-password" component={ResetPassword} />
         </>
       )}
       <Route component={NotFound} />
