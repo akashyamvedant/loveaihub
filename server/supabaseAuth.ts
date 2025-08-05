@@ -463,8 +463,8 @@ export async function setupAuth(app: Express) {
           sameSite: 'lax',
           maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
         });
-        // Redirect to /home instead of root with query parameter
-        return res.redirect(`${baseUrl}/home`);
+        // Redirect to root dashboard
+        return res.redirect(`${baseUrl}/`);
       }
 
       // Handle authorization code flow
@@ -522,8 +522,8 @@ export async function setupAuth(app: Express) {
         };
       }
 
-      // Redirect to home page with success parameter
-      res.redirect(`${baseUrl}/home`);
+      // Redirect to dashboard 
+      res.redirect(`${baseUrl}/`);
     } catch (error: any) {
       console.error('OAuth callback error:', error);
       const baseUrl = `${req.protocol}://${req.get('host')}`;

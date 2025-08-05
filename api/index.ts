@@ -368,7 +368,7 @@ app.get('/auth/callback', async (req, res) => {
           });
         }
 
-        return res.redirect("https://www.loveaihub.com/home");
+        return res.redirect("https://www.loveaihub.com/");
       } catch (tokenError) {
         console.error('Error processing token:', tokenError);
         return res.redirect("https://www.loveaihub.com/?error=token_processing_failed");
@@ -403,7 +403,7 @@ app.get('/auth/callback', async (req, res) => {
             maxAge: 1000 * 60 * 60 * 24 * 7,
             domain: '.loveaihub.com'
           });
-          return res.redirect("https://www.loveaihub.com/home");
+          return res.redirect("https://www.loveaihub.com/");
         }
       }
       

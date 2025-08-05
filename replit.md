@@ -52,3 +52,12 @@ The backend follows a service-oriented architecture, handling AI API integration
 - **Payment Processing**: Razorpay for subscriptions and payments.
 - **Database Hosting**: Neon for PostgreSQL.
 - **Authentication**: Supabase authentication service.
+
+## Recent Changes (August 2025)
+
+- **OAuth Redirect URL Fix (August 5, 2025)**
+  - **RESOLVED**: Fixed critical OAuth redirect URL conflict causing 404 NOT_FOUND errors
+  - **Issue**: OAuth callbacks were redirecting to `/home` but production dashboard was at root URL `/`
+  - **Solution**: Updated both production (api/index.ts) and development (server/supabaseAuth.ts) OAuth callbacks to redirect to root URL `/`
+  - **Result**: Users now successfully land on dashboard after Google OAuth authentication
+  - Both local development and production environments now have consistent OAuth redirect behavior
