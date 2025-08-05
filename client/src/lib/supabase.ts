@@ -2,8 +2,12 @@ import { createClient } from '@supabase/supabase-js';
 import { authStorage } from './authStorage';
 
 // These will be provided by the user as environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://gfrpidhedgqixkgafumc.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcnBpZGhlZGdxaXhrZ2FmdW1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1ODM0NjgsImV4cCI6MjA2OTE1OTQ2OH0.JaYdiISBG8vqfen_qzkOVgYRBq4V2v5CzvxjhBBsM9c';
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Supabase configuration missing. Please check environment variables.');
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 

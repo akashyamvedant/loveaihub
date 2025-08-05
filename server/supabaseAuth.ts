@@ -8,12 +8,14 @@ import { storage } from "./storage";
 let supabase: any = null;
 
 function initializeSupabase() {
-  if (!supabase && process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
+  if (!supabase) {
     try {
-      supabase = createClient(
-        process.env.SUPABASE_URL,
-        process.env.SUPABASE_ANON_KEY
-      );
+      // Use environment variables with fallback values for migration
+      const supabaseUrl = process.env.SUPABASE_URL || 'https://gfrpidhedgqixkgafumc.supabase.co';
+      const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcnBpZGhlZGdxaXhrZ2FmdW1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1ODM0NjgsImV4cCI6MjA2OTE1OTQ2OH0.JaYdiISBG8vqfen_qzkOVgYRBq4V2v5CzvxjhBBsM9c';
+      
+      supabase = createClient(supabaseUrl, supabaseAnonKey);
+      console.log('Supabase initialized successfully');
     } catch (error) {
       console.error("Failed to initialize Supabase:", error);
     }
