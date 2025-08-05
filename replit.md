@@ -58,6 +58,9 @@ The backend follows a service-oriented architecture, handling AI API integration
 - **OAuth Redirect URL Fix (August 5, 2025)**
   - **RESOLVED**: Fixed critical OAuth redirect URL conflict causing 404 NOT_FOUND errors
   - **Issue**: OAuth callbacks were redirecting to `/home` but production dashboard was at root URL `/`
-  - **Solution**: Updated both production (api/index.ts) and development (server/supabaseAuth.ts) OAuth callbacks to redirect to root URL `/`
-  - **Result**: Users now successfully land on dashboard after Google OAuth authentication
-  - Both local development and production environments now have consistent OAuth redirect behavior
+  - **Root Cause**: Found 5 separate redirect locations all pointing to incorrect `/home` path
+  - **Solution**: Updated ALL OAuth redirect URLs to point to root URL `/`:
+    * `server/supabaseAuth.ts` - Local development OAuth callbacks (2 locations) 
+    * `api/index.ts` - Production Vercel serverless function (3 locations including client-side JavaScript)
+  - **Status**: Code fixed, requires production deployment to take effect
+  - **Result**: Consistent OAuth redirect behavior across all environments

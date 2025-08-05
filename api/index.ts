@@ -511,7 +511,7 @@ app.get('/auth/callback', async (req, res) => {
                   })
                 }).then(response => {
                   if (response.ok) {
-                    window.location.href = 'https://www.loveaihub.com/home';
+                    window.location.href = 'https://www.loveaihub.com/';
                   } else {
                     window.location.href = 'https://www.loveaihub.com/?error=token_processing_failed';
                   }
@@ -551,7 +551,7 @@ app.get('/auth/callback', async (req, res) => {
       });
 
       // Redirect to homepage with success
-      res.redirect("https://www.loveaihub.com/home");
+      res.redirect("https://www.loveaihub.com/");
     } else {
       console.error('No user or session in response:', data);
       res.redirect("https://www.loveaihub.com/?error=oauth_failed");
