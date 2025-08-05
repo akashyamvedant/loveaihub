@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Lock, Eye, EyeOff, Loader2, CheckCircle } from "lucide-react";
 
-export default function ResetPassword() {
+export default function ResetPasswordTest() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -18,9 +18,6 @@ export default function ResetPassword() {
   const [isPageReady, setIsPageReady] = useState(false);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-
-  // Debug: Add page load indicator
-  console.log('ResetPassword component mounted');
 
   useEffect(() => {
     console.log('Reset password useEffect triggered');
@@ -61,9 +58,7 @@ export default function ResetPassword() {
         });
       }, 500);
     } else if (!type && !accessTokenFromHash) {
-      // Show debug information and allow user to proceed if they have tokens
       console.log('No tokens found in URL - this might be a direct visit or the tokens were cleared');
-      // Always show the page, just indicate the issue
       setTimeout(() => {
         toast({
           title: "Invalid Reset Link", 
@@ -72,7 +67,6 @@ export default function ResetPassword() {
         });
       }, 1000);
     } else {
-      // Invalid tokens
       console.log('Invalid reset link detected');
       setTimeout(() => {
         toast({
@@ -138,7 +132,6 @@ export default function ResetPassword() {
         description: "Your password has been updated successfully!",
       });
 
-      // Redirect to home page after 3 seconds
       setTimeout(() => {
         setLocation('/');
       }, 3000);
@@ -155,9 +148,7 @@ export default function ResetPassword() {
     }
   };
 
-  // Always show loading state first to debug blank screen
   if (!isPageReady) {
-    console.log('Page not ready, showing loading...');
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
         {/* Background glow effect */}
@@ -222,81 +213,81 @@ export default function ResetPassword() {
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium text-white">
-                  New Password
-                </Label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
-                    placeholder="Enter your new password"
-                    className="h-14 pl-12 pr-12 bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 rounded-xl"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 text-slate-400 hover:text-white"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-sm font-medium text-white">
-                  Confirm New Password
-                </Label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                  <Input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                    minLength={6}
-                    placeholder="Confirm your new password"
-                    className="h-14 pl-12 pr-12 bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 rounded-xl"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 text-slate-400 hover:text-white"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  >
-                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                </div>
-              </div>
-
-              <Button 
-                type="submit" 
-                disabled={isLoading || !accessToken}
-                className="w-full h-14 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold text-lg rounded-xl shadow-lg shadow-purple-500/25"
-              >
-                {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-                Update Password
-              </Button>
-
-              <div className="text-center">
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-sm font-medium text-white">
+                New Password
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  placeholder="Enter your new password"
+                  className="h-14 pl-12 pr-12 bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 rounded-xl"
+                />
                 <Button
                   type="button"
-                  variant="link"
-                  className="text-purple-400 hover:text-purple-300"
-                  onClick={() => setLocation('/')}
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 text-slate-400 hover:text-white"
+                  onClick={() => setShowPassword(!showPassword)}
                 >
-                  Back to Home
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-sm font-medium text-white">
+                Confirm New Password
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  placeholder="Confirm your new password"
+                  className="h-14 pl-12 pr-12 bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 rounded-xl"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 text-slate-400 hover:text-white"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+
+            <Button 
+              type="submit" 
+              disabled={isLoading || !accessToken}
+              className="w-full h-14 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold text-lg rounded-xl shadow-lg shadow-purple-500/25"
+            >
+              {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+              Update Password
+            </Button>
+
+            <div className="text-center">
+              <Button
+                type="button"
+                variant="link"
+                className="text-purple-400 hover:text-purple-300"
+                onClick={() => setLocation('/')}
+              >
+                Back to Home
+              </Button>
+            </div>
           </form>
         </div>
       </div>
