@@ -27,12 +27,15 @@
     {
       "src": "/auth/callback",
       "dest": "/api/index.ts"
-    }
-  ],
-  "rewrites": [
+    },
     {
-      "source": "/((?!api/|auth/|assets/).*)",
-      "destination": "/index.html"
+      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|map))",
+      "dest": "/dist/public/$1"
+    },
+    {
+      "src": "/[^.]+",
+      "dest": "/dist/public/index.html",
+      "status": 200
     }
   ]
 }
