@@ -1,318 +1,263 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  History, 
-  Download, 
-  Search, 
-  Filter, 
-  Image, 
-  Video, 
-  MessageSquare, 
-  Mic, 
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  History,
+  Search,
+  Filter,
+  Download,
+  Share,
+  Heart,
+  MoreHorizontal,
+  Image as ImageIcon,
+  Video,
+  MessageSquare,
+  Mic,
   Edit,
-  Copy,
-  ExternalLink,
   Calendar,
-  Clock,
-  Eye,
-  Trash2
+  Clock
 } from "lucide-react";
-
-const typeIcons = {
-  image: Image,
-  video: Video,
-  chat: MessageSquare,
-  audio: Mic,
-  transcription: Mic,
-  image_edit: Edit,
-};
-
-const typeColors = {
-  image: "bg-primary/20 text-primary",
-  video: "bg-cyan-500/20 text-cyan-400",
-  chat: "bg-purple-500/20 text-purple-400",
-  audio: "bg-emerald-500/20 text-emerald-400",
-  transcription: "bg-orange-500/20 text-orange-400",
-  image_edit: "bg-pink-500/20 text-pink-400",
-};
+import { formatDistanceToNow } from "date-fns";
+import { useGenerationHistory } from "@/hooks/useDashboardData";
 
 export default function GenerationHistory() {
+  const { data: generations, isLoading } = useGenerationHistory();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedType, setSelectedType] = useState("all");
-  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [filterType, setFilterType] = useState<string>("all");
+  const [likedItems, setLikedItems] = useState<Set<string>>(new Set());
 
-  const { data: generations, isLoading } = useQuery({
-    queryKey: ["/api/generations"],
-    retry: false,
-  });
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'image': return ImageIcon;
+      case 'video': return Video;
+      case 'chat': return MessageSquare;
+      case 'audio': return Mic;
+      case 'transcription': return Mic;
+      case 'image_edit': return Edit;
+      default: return Clock;
+    }
+  };
 
-  const filteredGenerations = generations?.filter((generation: any) => {
-    const matchesSearch = generation.prompt?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         generation.model?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = selectedType === "all" || generation.type === selectedType;
-    const matchesStatus = selectedStatus === "all" || generation.status === selectedStatus;
-    
-    return matchesSearch && matchesType && matchesStatus;
+  const getActivityColor = (type: string) => {
+    switch (type) {
+      case 'image': return 'bg-gradient-to-br from-purple-500 to-pink-500';
+      case 'video': return 'bg-gradient-to-br from-red-500 to-orange-500';
+      case 'chat': return 'bg-gradient-to-br from-green-500 to-teal-500';
+      case 'audio': return 'bg-gradient-to-br from-blue-500 to-cyan-500';
+      case 'transcription': return 'bg-gradient-to-br from-indigo-500 to-purple-500';
+      case 'image_edit': return 'bg-gradient-to-br from-yellow-500 to-orange-500';
+      default: return 'bg-gradient-to-br from-gray-500 to-gray-600';
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed': return 'text-green-500';
+      case 'processing': return 'text-yellow-500';
+      case 'failed': return 'text-red-500';
+      default: return 'text-gray-500';
+    }
+  };
+
+  const getActivityTitle = (activity: any) => {
+    const typeMap = {
+      'image': 'Image Generation',
+      'video': 'Video Creation',
+      'chat': 'AI Chat Session',
+      'audio': 'Audio Generation',
+      'transcription': 'Audio Transcription',
+      'image_edit': 'Image Editing'
+    };
+    return typeMap[activity.type as keyof typeof typeMap] || 'AI Generation';
+  };
+
+  const filteredGenerations = generations?.filter(generation => {
+    const matchesSearch = !searchQuery || 
+      generation.prompt.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      generation.model.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = filterType === "all" || generation.type === filterType;
+    return matchesSearch && matchesType;
   }) || [];
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+  const handleToggleLike = (id: string) => {
+    setLikedItems(prev => {
+      const newLiked = new Set(prev);
+      if (newLiked.has(id)) {
+        newLiked.delete(id);
+      } else {
+        newLiked.add(id);
+      }
+      return newLiked;
     });
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-  };
+  const generationTypes = [...new Set(generations?.map(g => g.type) || [])];
 
-  const downloadResult = (generation: any) => {
-    if (generation.result?.data?.[0]?.url) {
-      window.open(generation.result.data[0].url, '_blank');
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      completed: { variant: "secondary" as const, color: "text-green-400", text: "Completed" },
-      pending: { variant: "outline" as const, color: "text-yellow-400", text: "Pending" },
-      failed: { variant: "destructive" as const, color: "text-red-400", text: "Failed" }
-    };
-    
-    return statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
-  };
-
-  const groupedGenerations = filteredGenerations.reduce((acc: any, generation: any) => {
-    const date = new Date(generation.createdAt).toDateString();
-    if (!acc[date]) {
-      acc[date] = [];
-    }
-    acc[date].push(generation);
-    return acc;
-  }, {});
-
-  return (
-    <Card className="glass-effect border-border">
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <History className="w-6 h-6" />
-          <span>Generation History</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {/* Filters */}
-        <div className="space-y-4 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search generations..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-slate-800/50 border-slate-700"
-              />
+  if (isLoading) {
+    return (
+      <Card className="glass-card">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <div className="h-6 bg-muted rounded w-40 animate-pulse"></div>
+              <div className="h-4 bg-muted rounded w-64 animate-pulse"></div>
             </div>
-            
-            <Select value={selectedType} onValueChange={setSelectedType}>
-              <SelectTrigger className="w-full sm:w-[160px] bg-slate-800/50 border-slate-700">
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="image">Images</SelectItem>
-                <SelectItem value="video">Videos</SelectItem>
-                <SelectItem value="chat">Chat</SelectItem>
-                <SelectItem value="audio">Audio</SelectItem>
-                <SelectItem value="transcription">Transcription</SelectItem>
-                <SelectItem value="image_edit">Image Edits</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="w-full sm:w-[160px] bg-slate-800/50 border-slate-700">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="h-10 bg-muted rounded w-32 animate-pulse"></div>
           </div>
-        </div>
-
-        {/* Generation List */}
-        {isLoading ? (
+          <div className="flex gap-2 mt-4">
+            <div className="h-10 bg-muted rounded flex-1 animate-pulse"></div>
+            <div className="h-10 bg-muted rounded w-24 animate-pulse"></div>
+          </div>
+        </CardHeader>
+        <CardContent>
           <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="loading-shimmer h-24 rounded-lg"></div>
-            ))}
-          </div>
-        ) : filteredGenerations.length === 0 ? (
-          <div className="text-center py-12">
-            <History className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No generations found</h3>
-            <p className="text-muted-foreground">
-              {generations?.length === 0 
-                ? "Start creating with our AI tools to see your history here" 
-                : "Try adjusting your search criteria"}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-6 max-h-[600px] overflow-y-auto">
-            {Object.entries(groupedGenerations).map(([date, dayGenerations]: [string, any]) => (
-              <div key={date}>
-                <div className="flex items-center space-x-2 mb-4">
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
-                  <h4 className="font-medium text-muted-foreground">
-                    {new Date(date).toLocaleDateString('en-US', { 
-                      weekday: 'long', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
-                  </h4>
-                </div>
-                
-                <div className="space-y-3">
-                  {dayGenerations.map((generation: any) => {
-                    const TypeIcon = typeIcons[generation.type as keyof typeof typeIcons] || Image;
-                    const statusBadge = getStatusBadge(generation.status);
-                    
-                    return (
-                      <div key={generation.id} className="glass-effect rounded-lg p-4 hover:bg-slate-800/30 transition-colors">
-                        <div className="flex items-start space-x-4">
-                          {/* Type Icon */}
-                          <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                            typeColors[generation.type as keyof typeof typeColors] || "bg-slate-700"
-                          }`}>
-                            <TypeIcon className="w-6 h-6" />
-                          </div>
-
-                          {/* Content */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <h4 className="font-medium truncate">
-                                {generation.model?.split('/')[1] || generation.model}
-                              </h4>
-                              <Badge variant={statusBadge.variant} className="text-xs">
-                                {statusBadge.text}
-                              </Badge>
-                            </div>
-                            
-                            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                              {generation.prompt || "No prompt provided"}
-                            </p>
-
-                            <div className="flex items-center space-x-4 text-xs text-muted-foreground mb-3">
-                              <div className="flex items-center space-x-1">
-                                <Clock className="w-3 h-3" />
-                                <span>{formatDate(generation.createdAt)}</span>
-                              </div>
-                              {generation.metadata?.options && (
-                                <div className="flex items-center space-x-1">
-                                  <Eye className="w-3 h-3" />
-                                  <span>{generation.metadata.options.size || "Standard"}</span>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Actions */}
-                            <div className="flex items-center space-x-2">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => copyToClipboard(generation.prompt || "")}
-                                className="h-8 px-2"
-                              >
-                                <Copy className="w-3 h-3 mr-1" />
-                                Copy
-                              </Button>
-                              
-                              {generation.result?.data?.[0]?.url && (
-                                <>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => window.open(generation.result.data[0].url, '_blank')}
-                                    className="h-8 px-2"
-                                  >
-                                    <ExternalLink className="w-3 h-3 mr-1" />
-                                    View
-                                  </Button>
-                                  
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => downloadResult(generation)}
-                                    className="h-8 px-2"
-                                  >
-                                    <Download className="w-3 h-3 mr-1" />
-                                    Download
-                                  </Button>
-                                </>
-                              )}
-
-                              {generation.result?.text && (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => copyToClipboard(generation.result.text)}
-                                  className="h-8 px-2"
-                                >
-                                  <Copy className="w-3 h-3 mr-1" />
-                                  Copy Text
-                                </Button>
-                              )}
-
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-8 px-2 text-red-400 hover:text-red-300"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          </div>
-
-                          {/* Preview */}
-                          {generation.result?.data?.[0]?.url && (
-                            <div className="w-16 h-16 bg-slate-700 rounded-lg overflow-hidden flex-shrink-0">
-                              {generation.type === "image" || generation.type === "image_edit" ? (
-                                <img
-                                  src={generation.result.data[0].url}
-                                  alt="Generated"
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : generation.type === "video" ? (
-                                <video
-                                  className="w-full h-full object-cover"
-                                  poster="/placeholder-video.jpg"
-                                >
-                                  <source src={generation.result.data[0].url} type="video/mp4" />
-                                </video>
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <TypeIcon className="w-8 h-8 text-muted-foreground" />
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="flex items-start space-x-3 p-3 rounded-lg animate-pulse">
+                <div className="w-12 h-12 bg-muted rounded-full"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-muted rounded w-3/4"></div>
+                  <div className="h-3 bg-muted rounded w-1/2"></div>
+                  <div className="flex space-x-2">
+                    <div className="h-4 bg-muted rounded w-16"></div>
+                    <div className="h-4 bg-muted rounded w-16"></div>
+                  </div>
                 </div>
               </div>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="glass-card">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <CardTitle className="flex items-center gap-2">
+              <History className="w-5 h-5 text-primary" />
+              Generation History
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              View and manage all your AI generations
+            </p>
+          </div>
+          <Button variant="outline" size="sm" className="flex items-center gap-2">
+            <Download className="w-4 h-4" />
+            Export All
+          </Button>
+        </div>
+
+        <div className="flex gap-3 mt-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Input
+              placeholder="Search generations..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="px-3 py-2 bg-background border border-border rounded-md text-sm"
+          >
+            <option value="all">All Types</option>
+            {generationTypes.map(type => (
+              <option key={type} value={type}>
+                {type.charAt(0).toUpperCase() + type.slice(1)}
+              </option>
+            ))}
+          </select>
+        </div>
+      </CardHeader>
+
+      <CardContent className="pt-0">
+        {filteredGenerations.length === 0 ? (
+          <div className="text-center py-12">
+            <History className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground mb-2">
+              {searchQuery || filterType !== "all" ? "No matching generations found" : "No generations yet"}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {searchQuery || filterType !== "all" 
+                ? "Try adjusting your search or filter criteria"
+                : "Start creating with our AI tools to see your history here"
+              }
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
+            {filteredGenerations.map((generation) => {
+              const Icon = getActivityIcon(generation.type);
+              const isLiked = likedItems.has(generation.id);
+              return (
+                <div
+                  key={generation.id}
+                  className="flex items-start space-x-3 p-4 rounded-lg border border-border/50 hover:bg-accent/10 transition-colors group"
+                >
+                  <Avatar className={`w-12 h-12 ${getActivityColor(generation.type)} flex items-center justify-center`}>
+                    <AvatarFallback className={`${getActivityColor(generation.type)} border-0`}>
+                      <Icon className="w-6 h-6 text-white" />
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                          {getActivityTitle(generation)}
+                        </h4>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {generation.prompt.length > 80
+                            ? `${generation.prompt.substring(0, 80)}...`
+                            : generation.prompt
+                          }
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity ml-4">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`h-8 w-8 p-0 ${isLiked ? 'text-red-500' : 'text-muted-foreground'}`}
+                          onClick={() => handleToggleLike(generation.id)}
+                        >
+                          <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground">
+                          <Share className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground">
+                          <Download className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-3 text-xs">
+                      <Badge variant="outline" className="text-xs">
+                        {generation.model}
+                      </Badge>
+                      <span className={`font-medium ${getStatusColor(generation.status)}`}>
+                        {generation.status}
+                      </span>
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {formatDistanceToNow(new Date(generation.createdAt), { addSuffix: true })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </CardContent>

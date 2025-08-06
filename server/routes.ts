@@ -345,6 +345,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Dashboard Statistics
+  app.get("/api/dashboard/stats", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.currentUser.id;
+      const stats = await storage.getUserDashboardStats(userId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+      res.status(500).json({ message: "Failed to fetch dashboard stats" });
+    }
+  });
+
+  // Recent Activity
+  app.get("/api/dashboard/recent-activity", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.currentUser.id;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const activities = await storage.getRecentActivity(userId, limit);
+      res.json(activities);
+    } catch (error) {
+      console.error("Error fetching recent activity:", error);
+      res.status(500).json({ message: "Failed to fetch recent activity" });
+    }
+  });
+
+  // Usage Analytics
+  app.get("/api/dashboard/analytics", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.currentUser.id;
+      const period = req.query.period as string || "7days";
+      const analytics = await storage.getUserAnalytics(userId, period);
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching usage analytics:", error);
+      res.status(500).json({ message: "Failed to fetch usage analytics" });
+    }
+  });
+
   // Blog Routes
   app.get("/api/blog", async (req, res) => {
     try {

@@ -12,22 +12,24 @@ import {
   Mic
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useDashboardStats } from "@/hooks/useDashboardData";
 
 export default function StatsCards() {
   const { user } = useAuth();
+  const { data: stats, isLoading } = useDashboardStats();
 
   const usagePercentage = user?.subscriptionType === "free" 
-    ? ((user?.generationsUsed || 0) / (user?.generationsLimit || 50)) * 100 
+    ? ((stats?.generationsUsed || 0) / (stats?.generationsLimit || 50)) * 100 
     : 0;
 
-  const stats = [
+  const mainStats = [
     {
       title: "Usage This Month",
-      value: user?.subscriptionType === "premium" ? "Unlimited" : `${user?.generationsUsed || 0}/${user?.generationsLimit || 50}`,
+      value: stats?.subscriptionType === "premium" ? "Unlimited" : `${stats?.generationsUsed || 0}/${stats?.generationsLimit || 50}`,
       change: "+12% from last month",
       icon: TrendingUp,
       color: "text-green-500",
-      showProgress: user?.subscriptionType === "free"
+      showProgress: stats?.subscriptionType === "free"
     },
     {
       title: "AI Models Available",
@@ -45,35 +47,35 @@ export default function StatsCards() {
     },
     {
       title: "Subscription Status",
-      value: user?.subscriptionType === "premium" ? "Premium" : "Free",
-      change: user?.subscriptionType === "premium" ? "All features unlocked" : "Upgrade for unlimited access",
+      value: stats?.subscriptionType === "premium" ? "Premium" : "Free",
+      change: stats?.subscriptionType === "premium" ? "All features unlocked" : "Upgrade for unlimited access",
       icon: Crown,
-      color: user?.subscriptionType === "premium" ? "text-yellow-500" : "text-gray-500"
+      color: stats?.subscriptionType === "premium" ? "text-yellow-500" : "text-gray-500"
     }
   ];
 
   const quickStats = [
     {
       label: "Images Generated",
-      value: "1,234",
+      value: (stats?.generationsByType?.image || 0).toString(),
       icon: Image,
       color: "bg-blue-500"
     },
     {
       label: "Videos Created",
-      value: "56",
+      value: (stats?.generationsByType?.video || 0).toString(),
       icon: Video,
       color: "bg-purple-500"
     },
     {
       label: "Chat Messages",
-      value: "789",
+      value: (stats?.generationsByType?.chat || 0).toString(),
       icon: MessageSquare,
       color: "bg-green-500"
     },
     {
       label: "Audio Files",
-      value: "23",
+      value: (stats?.generationsByType?.audio || 0).toString(),
       icon: Mic,
       color: "bg-orange-500"
     }

@@ -43,6 +43,11 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   updateUserGenerationsLimit(userId: string, limit: number): Promise<void>;
   getUsageStats(): Promise<any>;
+  
+  // Dashboard operations
+  getUserDashboardStats(userId: string): Promise<any>;
+  getRecentActivity(userId: string, limit: number): Promise<Generation[]>;
+  getUserAnalytics(userId: string, period: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -207,6 +212,108 @@ export class DatabaseStorage implements IStorage {
       totalUsers: totalUsers[0].count,
       totalGenerations: totalGenerations[0].count,
       activeSubscriptions: activeSubscriptions[0].count,
+    };
+  }
+
+  // Dashboard operations implementation
+  async getUserDashboardStats(userId: string): Promise<any> {
+    const user = await this.getUser(userId);
+    if (!user) throw new Error("User not found");
+
+    // Get generation counts by type
+    const generationCounts = await db
+      .select({
+        type: generations.type,
+        count: sql<number>`count(*)`
+      })
+      .from(generations)
+      .where(eq(generations.userId, userId))
+      .groupBy(generations.type);
+
+    // Get total generations
+    const totalGenerations = generationCounts.reduce((sum, item) => sum + item.count, 0);
+
+    // Get recent completions (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const recentCompletions = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(generations)
+      .where(
+        and(
+          eq(generations.userId, userId),
+          sql`${generations.createdAt} >= ${sevenDaysAgo}`,
+          eq(generations.status, 'completed')
+        )
+      );
+
+    return {
+      totalGenerations,
+      generationsUsed: user.generationsUsed || 0,
+      generationsLimit: user.generationsLimit || 50,
+      subscriptionType: user.subscriptionType || 'free',
+      recentCompletions: recentCompletions[0].count,
+      generationsByType: generationCounts.reduce((acc, item) => {
+        acc[item.type] = item.count;
+        return acc;
+      }, {} as Record<string, number>)
+    };
+  }
+
+  async getRecentActivity(userId: string, limit: number = 10): Promise<Generation[]> {
+    const activities = await db
+      .select()
+      .from(generations)
+      .where(eq(generations.userId, userId))
+      .orderBy(desc(generations.createdAt))
+      .limit(limit);
+    
+    return activities;
+  }
+
+  async getUserAnalytics(userId: string, period: string): Promise<any> {
+    const days = period === '30days' ? 30 : period === '7days' ? 7 : 1;
+    const periodStart = new Date();
+    periodStart.setDate(periodStart.getDate() - days);
+
+    // Get daily generation counts
+    const dailyStats = await db
+      .select({
+        date: sql<string>`DATE(${generations.createdAt})`,
+        type: generations.type,
+        count: sql<number>`count(*)`
+      })
+      .from(generations)
+      .where(
+        and(
+          eq(generations.userId, userId),
+          sql`${generations.createdAt} >= ${periodStart}`
+        )
+      )
+      .groupBy(sql`DATE(${generations.createdAt})`, generations.type)
+      .orderBy(sql`DATE(${generations.createdAt})`);
+
+    // Get model usage stats
+    const modelStats = await db
+      .select({
+        model: generations.model,
+        count: sql<number>`count(*)`
+      })
+      .from(generations)
+      .where(
+        and(
+          eq(generations.userId, userId),
+          sql`${generations.createdAt} >= ${periodStart}`
+        )
+      )
+      .groupBy(generations.model)
+      .orderBy(desc(sql`count(*)`));
+
+    return {
+      period,
+      dailyStats,
+      modelStats
     };
   }
 }
