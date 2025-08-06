@@ -1,143 +1,116 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Test Reset Password Flow</title>
+    <title>Password Reset Token Tester</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
-        .section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
-        button { padding: 10px 20px; margin: 5px; }
-        textarea { width: 100%; height: 100px; }
-        .log { background: #f5f5f5; padding: 10px; margin: 10px 0; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .debug { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .token-input { width: 100%; padding: 10px; margin: 10px 0; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .error { color: red; }
+        .success { color: green; }
     </style>
 </head>
 <body>
-    <h1>Test Reset Password Flow</h1>
-    
-    <div class="section">
-        <h3>Step 1: Test with Real Supabase Token</h3>
-        <p>First, let's test by generating a real password reset token from Supabase:</p>
-        <input type="email" id="emailInput" placeholder="Enter your email" style="width: 300px; padding: 8px;">
-        <button onclick="sendResetEmail()">Send Reset Email</button>
-        <div id="resetEmailResult" class="log"></div>
-    </div>
+    <div class="container">
+        <h1>Password Reset Token Tester</h1>
+        
+        <div class="debug">
+            <h3>Current URL Analysis:</h3>
+            <p><strong>Full URL:</strong> <span id="fullUrl"></span></p>
+            <p><strong>Hash:</strong> <span id="hash"></span></p>
+            <p><strong>Search:</strong> <span id="search"></span></p>
+        </div>
 
-    <div class="section">
-        <h3>Step 2: Test Token from URL</h3>
-        <p>Paste the full reset URL you get from the email:</p>
-        <textarea id="resetUrlInput" placeholder="Paste the reset URL from your email here..."></textarea>
-        <button onclick="parseResetUrl()">Parse Reset URL</button>
-        <div id="urlParseResult" class="log"></div>
-    </div>
+        <div class="debug">
+            <h3>Token Extraction:</h3>
+            <p><strong>Access Token:</strong> <span id="accessToken"></span></p>
+            <p><strong>Token Type:</strong> <span id="tokenType"></span></p>
+            <p><strong>Token Length:</strong> <span id="tokenLength"></span></p>
+        </div>
 
-    <div class="section">
-        <h3>Step 3: Test Password Update</h3>
-        <p>Use the extracted token to test password update:</p>
-        <input type="password" id="newPassword" placeholder="New password" style="width: 300px; padding: 8px;">
-        <button onclick="testPasswordUpdate()">Test Password Update</button>
-        <div id="passwordUpdateResult" class="log"></div>
+        <div>
+            <h3>Test Password Reset:</h3>
+            <input type="text" id="tokenInput" class="token-input" placeholder="Paste your reset token here (from email URL)">
+            <input type="password" id="passwordInput" class="token-input" placeholder="New password">
+            <button onclick="testPasswordReset()">Test Password Reset</button>
+        </div>
+
+        <div id="result"></div>
     </div>
 
     <script>
-        let extractedToken = null;
-
-        async function sendResetEmail() {
-            const email = document.getElementById('emailInput').value;
-            const resultDiv = document.getElementById('resetEmailResult');
+        // Auto-extract tokens on page load
+        function analyzeUrl() {
+            const fullUrl = window.location.href;
+            const hash = window.location.hash.substring(1);
+            const search = window.location.search.substring(1);
             
-            if (!email) {
-                resultDiv.innerHTML = '<span style="color: red;">Please enter an email</span>';
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/auth/reset-password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-
-                const result = await response.json();
+            document.getElementById('fullUrl').textContent = fullUrl;
+            document.getElementById('hash').textContent = hash || 'none';
+            document.getElementById('search').textContent = search || 'none';
+            
+            const hashParams = new URLSearchParams(hash);
+            const searchParams = new URLSearchParams(search);
+            
+            const accessToken = hashParams.get('access_token') || searchParams.get('access_token');
+            const type = hashParams.get('type') || searchParams.get('type');
+            
+            document.getElementById('accessToken').textContent = accessToken ? 
+                accessToken.substring(0, 50) + '...' : 'not found';
+            document.getElementById('tokenType').textContent = type || 'not found';
+            document.getElementById('tokenLength').textContent = accessToken ? 
+                accessToken.length : 'N/A';
                 
-                if (response.ok) {
-                    resultDiv.innerHTML = '<span style="color: green;">✓ Reset email sent! Check your email for the reset link.</span>';
-                } else {
-                    resultDiv.innerHTML = `<span style="color: red;">Error: ${result.message}</span>`;
-                }
-            } catch (error) {
-                resultDiv.innerHTML = `<span style="color: red;">Network error: ${error.message}</span>`;
+            // Auto-fill token input if found
+            if (accessToken) {
+                document.getElementById('tokenInput').value = accessToken;
             }
         }
-
-        function parseResetUrl() {
-            const url = document.getElementById('resetUrlInput').value;
-            const resultDiv = document.getElementById('urlParseResult');
+        
+        async function testPasswordReset() {
+            const token = document.getElementById('tokenInput').value.trim();
+            const password = document.getElementById('passwordInput').value.trim();
+            const resultDiv = document.getElementById('result');
             
-            if (!url) {
-                resultDiv.innerHTML = '<span style="color: red;">Please paste the reset URL</span>';
+            if (!token || !password) {
+                resultDiv.innerHTML = '<div class="error">Please provide both token and password</div>';
                 return;
             }
-
-            try {
-                const urlObj = new URL(url);
-                const hash = urlObj.hash.substring(1);
-                const hashParams = new URLSearchParams(hash);
-                
-                const accessToken = hashParams.get('access_token');
-                const refreshToken = hashParams.get('refresh_token');
-                const type = hashParams.get('type');
-                
-                if (type === 'recovery' && accessToken) {
-                    extractedToken = accessToken;
-                    resultDiv.innerHTML = `
-                        <span style="color: green;">✓ Valid reset token found!</span><br>
-                        Type: ${type}<br>
-                        Access Token: ${accessToken.substring(0, 20)}...<br>
-                        Refresh Token: ${refreshToken ? refreshToken.substring(0, 20) + '...' : 'Not present'}<br>
-                        <strong>Token ready for testing!</strong>
-                    `;
-                } else {
-                    resultDiv.innerHTML = '<span style="color: red;">Invalid reset URL - no recovery token found</span>';
-                }
-            } catch (error) {
-                resultDiv.innerHTML = `<span style="color: red;">URL parsing error: ${error.message}</span>`;
-            }
-        }
-
-        async function testPasswordUpdate() {
-            const password = document.getElementById('newPassword').value;
-            const resultDiv = document.getElementById('passwordUpdateResult');
             
-            if (!extractedToken) {
-                resultDiv.innerHTML = '<span style="color: red;">Please parse a reset URL first to get a token</span>';
-                return;
-            }
-
-            if (!password) {
-                resultDiv.innerHTML = '<span style="color: red;">Please enter a new password</span>';
-                return;
-            }
-
+            resultDiv.innerHTML = 'Testing...';
+            
             try {
                 const response = await fetch('/api/auth/update-password', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${extractedToken}`
+                        'Authorization': 'Bearer ' + token
                     },
                     body: JSON.stringify({ password })
                 });
-
+                
                 const result = await response.json();
                 
                 if (response.ok) {
-                    resultDiv.innerHTML = '<span style="color: green;">✓ Password updated successfully!</span>';
+                    resultDiv.innerHTML = '<div class="success">SUCCESS: ' + result.message + 
+                        ' (Method: ' + result.method + ')</div>';
                 } else {
-                    resultDiv.innerHTML = `<span style="color: red;">Error: ${result.message}</span><br>Status: ${response.status}`;
+                    resultDiv.innerHTML = '<div class="error">ERROR: ' + result.message + 
+                        (result.debug ? ' (Debug: ' + result.debug + ')' : '') + '</div>';
                 }
             } catch (error) {
-                resultDiv.innerHTML = `<span style="color: red;">Network error: ${error.message}</span>`;
+                resultDiv.innerHTML = '<div class="error">NETWORK ERROR: ' + error.message + '</div>';
             }
         }
+        
+        // Run analysis on page load
+        analyzeUrl();
+        
+        // Re-analyze if URL changes
+        window.addEventListener('hashchange', analyzeUrl);
     </script>
 </body>
 </html>
