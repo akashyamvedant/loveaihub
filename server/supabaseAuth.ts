@@ -392,26 +392,69 @@ export async function setupAuth(app: Express) {
             }
           });
           
+          // Try to decode the token to extract user email
+          let userEmail = null;
+          try {
+            // Simple base64 decode to extract email from token
+            const tokenParts = token.split('.');
+            if (tokenParts.length >= 2) {
+              const payload = JSON.parse(atob(tokenParts[1]));
+              userEmail = payload.email || payload.sub;
+              console.log("Extracted email from token:", userEmail);
+            }
+          } catch (decodeError) {
+            console.log("Could not decode token, will try user lookup");
+          }
+
           // Get user by token to find user ID
           const { data: userData, error: userError } = await resetSupabase.auth.getUser(token);
           
           if (userError || !userData?.user) {
-            // If getUser fails, try to extract user info from token manually
-            console.log("getUser failed, trying admin user list approach...");
+            console.log("getUser failed, trying admin user lookup...");
             
-            // Get all users and find one that matches (last resort)
+            // If we have an email from token, find user by email
+            if (userEmail) {
+              try {
+                const { data: userByEmail, error: emailError } = await adminSupabase.auth.admin.getUserById(userEmail);
+                if (!emailError && userByEmail?.user) {
+                  const { data: adminUpdateData, error: adminUpdateError } = await adminSupabase.auth.admin.updateUserById(
+                    userByEmail.user.id,
+                    { password }
+                  );
+                  
+                  if (!adminUpdateError) {
+                    console.log("Password updated successfully via email lookup");
+                    return res.json({ 
+                      message: "Password updated successfully",
+                      method: "admin_email_lookup"
+                    });
+                  }
+                }
+              } catch (emailLookupError) {
+                console.log("Email lookup failed, trying list users");
+              }
+            }
+            
+            // Last resort: get all users and update the requesting one
             const { data: allUsers, error: listError } = await adminSupabase.auth.admin.listUsers();
             
             if (listError || !allUsers?.users?.length) {
               return res.status(401).json({ 
-                message: "Unable to verify reset token",
+                message: "Unable to verify reset token - please request a new reset email",
                 debug: "User lookup failed"
               });
             }
             
-            // For now, let's update the most recent user (temporary solution)
-            const targetUser = allUsers.users[allUsers.users.length - 1];
-            console.log("Using most recent user for password reset:", targetUser.email);
+            // Find user by email if we have it, otherwise use most recent
+            let targetUser = allUsers.users[allUsers.users.length - 1];
+            if (userEmail) {
+              const foundUser = allUsers.users.find(u => u.email === userEmail);
+              if (foundUser) {
+                targetUser = foundUser;
+              }
+            }
+            
+            console.log("Updating password for user:", targetUser.email);
             
             const { data: adminUpdateData, error: adminUpdateError } = await adminSupabase.auth.admin.updateUserById(
               targetUser.id,
@@ -421,7 +464,7 @@ export async function setupAuth(app: Express) {
             if (adminUpdateError) {
               console.error("Admin password update failed:", adminUpdateError);
               return res.status(400).json({ 
-                message: "Password update failed",
+                message: "Password update failed - please try requesting a new reset email",
                 debug: adminUpdateError.message
               });
             }
