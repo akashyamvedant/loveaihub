@@ -398,8 +398,13 @@ export async function setupAuth(app: Express) {
             // Simple base64 decode to extract email from token
             const tokenParts = token.split('.');
             if (tokenParts.length >= 2) {
-              const payload = JSON.parse(atob(tokenParts[1]));
-              userEmail = payload.email || payload.sub;
+              // Add padding to base64 string if needed
+              let base64 = tokenParts[1];
+              while (base64.length % 4) {
+                base64 += '=';
+              }
+              const payload = JSON.parse(atob(base64));
+              userEmail = payload.email || payload.user_metadata?.email || payload.sub;
               console.log("Extracted email from token:", userEmail);
             }
           } catch (decodeError) {
@@ -412,26 +417,38 @@ export async function setupAuth(app: Express) {
           if (userError || !userData?.user) {
             console.log("getUser failed, trying admin user lookup...");
             
-            // If we have an email from token, find user by email
+            // If we have an email from token, find user by email using listUsers
             if (userEmail) {
               try {
-                const { data: userByEmail, error: emailError } = await adminSupabase.auth.admin.getUserById(userEmail);
-                if (!emailError && userByEmail?.user) {
-                  const { data: adminUpdateData, error: adminUpdateError } = await adminSupabase.auth.admin.updateUserById(
-                    userByEmail.user.id,
-                    { password }
-                  );
-                  
-                  if (!adminUpdateError) {
-                    console.log("Password updated successfully via email lookup");
-                    return res.json({ 
-                      message: "Password updated successfully",
-                      method: "admin_email_lookup"
-                    });
+                console.log("Looking up user by email:", userEmail);
+                const { data: allUsers, error: listError } = await adminSupabase.auth.admin.listUsers();
+                
+                if (!listError && allUsers?.users) {
+                  const userByEmail = allUsers.users.find(u => u.email === userEmail);
+                  if (userByEmail) {
+                    console.log("Found user by email, updating password...");
+                    const { data: adminUpdateData, error: adminUpdateError } = await adminSupabase.auth.admin.updateUserById(
+                      userByEmail.id,
+                      { password }
+                    );
+                    
+                    if (!adminUpdateError) {
+                      console.log("Password updated successfully via email lookup");
+                      return res.json({ 
+                        message: "Password updated successfully",
+                        method: "admin_email_lookup"
+                      });
+                    } else {
+                      console.error("Admin update failed for found user:", adminUpdateError);
+                    }
+                  } else {
+                    console.log("User not found by email in user list");
                   }
+                } else {
+                  console.log("Could not list users for email lookup:", listError);
                 }
               } catch (emailLookupError) {
-                console.log("Email lookup failed, trying list users");
+                console.log("Email lookup failed:", emailLookupError);
               }
             }
             
