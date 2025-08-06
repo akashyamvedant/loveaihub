@@ -26,31 +26,56 @@ export default function ResetPassword() {
     console.log('Reset password useEffect triggered');
     setIsPageReady(true);
     
-    // Parse URL fragments for Supabase tokens
+    // Enhanced token extraction with detailed debugging
+    const fullUrl = window.location.href;
     const hash = window.location.hash.substring(1);
     const search = window.location.search.substring(1);
+    
+    console.log('=== ENHANCED TOKEN DEBUGGING ===');
+    console.log('Full URL:', fullUrl);
+    console.log('Hash fragment:', hash);
+    console.log('Search params:', search);
+    
+    // Parse both hash and search parameters
     const hashParams = new URLSearchParams(hash);
     const searchParams = new URLSearchParams(search);
     
-    const accessTokenFromHash = hashParams.get('access_token') || searchParams.get('access_token');
-    const refreshTokenFromHash = hashParams.get('refresh_token') || searchParams.get('refresh_token');
-    const type = hashParams.get('type') || searchParams.get('type');
+    // Try multiple extraction methods
+    const accessTokenFromHash = hashParams.get('access_token');
+    const accessTokenFromSearch = searchParams.get('access_token'); 
+    const refreshTokenFromHash = hashParams.get('refresh_token');
+    const refreshTokenFromSearch = searchParams.get('refresh_token');
+    const typeFromHash = hashParams.get('type');
+    const typeFromSearch = searchParams.get('type');
     
-    console.log('Reset password page - Full URL:', window.location.href);
-    console.log('Reset password page - Hash:', hash);
-    console.log('Reset password page - Search:', search);
-    console.log('Reset password page - Parsed params:', { 
-      type, 
-      hasAccessToken: !!accessTokenFromHash,
-      accessTokenFromHash: accessTokenFromHash ? 'present' : 'missing',
-      refreshTokenFromHash: refreshTokenFromHash ? 'present' : 'missing',
-      actualToken: accessTokenFromHash ? accessTokenFromHash.substring(0, 20) + '...' : 'none'
+    console.log('Hash extraction results:', {
+      access_token: accessTokenFromHash ? `${accessTokenFromHash.substring(0, 30)}...` : null,
+      refresh_token: refreshTokenFromHash ? 'present' : null,
+      type: typeFromHash
     });
     
-    if (type === 'recovery' && accessTokenFromHash) {
-      console.log('Valid recovery tokens found');
-      setAccessToken(accessTokenFromHash);
-      setRefreshToken(refreshTokenFromHash);
+    console.log('Search extraction results:', {
+      access_token: accessTokenFromSearch ? `${accessTokenFromSearch.substring(0, 30)}...` : null,
+      refresh_token: refreshTokenFromSearch ? 'present' : null,
+      type: typeFromSearch
+    });
+    
+    // Choose the best token source
+    const accessTokenFromUrl = accessTokenFromHash || accessTokenFromSearch;
+    const refreshTokenFromUrl = refreshTokenFromHash || refreshTokenFromSearch;
+    const type = typeFromHash || typeFromSearch;
+    
+    console.log('Final selected token:', {
+      type,
+      hasAccessToken: !!accessTokenFromUrl,
+      tokenLength: accessTokenFromUrl?.length || 0,
+      tokenStart: accessTokenFromUrl ? accessTokenFromUrl.substring(0, 50) + '...' : 'none'
+    });
+    
+    if (type === 'recovery' && accessTokenFromUrl) {
+      console.log('Valid recovery tokens found - setting state');
+      setAccessToken(accessTokenFromUrl);
+      setRefreshToken(refreshTokenFromUrl);
       
       // Clean up URL to remove sensitive tokens
       window.history.replaceState({}, document.title, '/reset-password');
@@ -61,7 +86,7 @@ export default function ResetPassword() {
           description: "You can now set your new password.",
         });
       }, 500);
-    } else if (!type && !accessTokenFromHash) {
+    } else if (!type && !accessTokenFromUrl) {
       // Show debug information and allow user to proceed if they have tokens
       console.log('No tokens found in URL - this might be a direct visit or the tokens were cleared');
       // Always show the page, but provide helpful guidance
@@ -118,7 +143,11 @@ export default function ResetPassword() {
 
     setIsLoading(true);
 
-    console.log('Password update attempt with token:', accessToken ? accessToken.substring(0, 20) + '...' : 'NO TOKEN');
+    console.log('=== PASSWORD UPDATE ATTEMPT ===');
+    console.log('Token available:', !!accessToken);
+    console.log('Token length:', accessToken?.length || 0);
+    console.log('Token preview:', accessToken ? accessToken.substring(0, 50) + '...' : 'NO TOKEN');
+    console.log('Password length:', password?.length || 0);
 
     try {
       const response = await fetch('/api/auth/update-password', {
