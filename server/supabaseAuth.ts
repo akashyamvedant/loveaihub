@@ -122,14 +122,18 @@ export async function setupAuth(app: Express) {
       }
 
       if (data.user) {
-        // Create user in our database
-        await storage.upsertUser({
-          id: data.user.id,
-          email: data.user.email!,
-          firstName: firstName,
-          lastName: lastName,
-          profileImageUrl: data.user.user_metadata?.avatar_url,
-        });
+        // Try to create user in database, but continue if it fails
+        try {
+          await storage.upsertUser({
+            id: data.user.id,
+            email: data.user.email!,
+            firstName: firstName,
+            lastName: lastName,
+            profileImageUrl: data.user.user_metadata?.avatar_url,
+          });
+        } catch (dbError) {
+          console.warn("Database operation failed, continuing without DB user:", dbError);
+        }
 
         // Store user session
         (req.session as any).user = {
@@ -175,14 +179,18 @@ export async function setupAuth(app: Express) {
       }
 
       if (data.user) {
-        // Update user in our database
-        await storage.upsertUser({
-          id: data.user.id,
-          email: data.user.email!,
-          firstName: data.user.user_metadata?.first_name,
-          lastName: data.user.user_metadata?.last_name,
-          profileImageUrl: data.user.user_metadata?.avatar_url,
-        });
+        // Try to update user in database, but continue if it fails
+        try {
+          await storage.upsertUser({
+            id: data.user.id,
+            email: data.user.email!,
+            firstName: data.user.user_metadata?.first_name,
+            lastName: data.user.user_metadata?.last_name,
+            profileImageUrl: data.user.user_metadata?.avatar_url,
+          });
+        } catch (dbError) {
+          console.warn("Database operation failed, continuing without DB user:", dbError);
+        }
 
         // Store user session
         (req.session as any).user = {
@@ -281,8 +289,25 @@ export async function setupAuth(app: Express) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      // Get user data from our database
-      const dbUser = await storage.getUser(user.id);
+      // Try to get user data from our database, fallback to Supabase user
+      let dbUser = null;
+      try {
+        dbUser = await storage.getUser(user.id);
+      } catch (dbError) {
+        console.warn("Database operation failed, using Supabase user data:", dbError);
+        dbUser = {
+          id: user.id,
+          email: user.email!,
+          firstName: user.user_metadata?.first_name || '',
+          lastName: user.user_metadata?.last_name || '',
+          profileImageUrl: user.user_metadata?.avatar_url,
+          subscriptionType: 'free',
+          generationsUsed: 0,
+          generationsLimit: 50,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+      }
 
       res.json({ 
         user: {

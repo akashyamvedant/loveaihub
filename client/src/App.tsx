@@ -58,6 +58,9 @@ function Router() {
   const isResetPasswordPage = window.location.pathname === '/reset-password';
   const hasAuth = !isResetPasswordPage && authStorage.hasAuth() && (isAuthenticated || isLoading);
   
+  // Debug logging
+  console.log('Auth state:', { isAuthenticated, isLoading, hasAuth, hasStoredAuth: authStorage.hasAuth() });
+  
   // Force auth refresh when landing on /home after OAuth
   useEffect(() => {
     if (window.location.pathname === '/home' && authStorage.hasAuth() && !isAuthenticated && !isLoading) {
