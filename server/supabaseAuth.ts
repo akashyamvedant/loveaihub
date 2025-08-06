@@ -332,6 +332,12 @@ export async function setupAuth(app: Express) {
       const { password } = req.body;
       const authHeader = req.headers.authorization;
 
+      console.log("Password update request received:", {
+        hasAuthHeader: !!authHeader,
+        hasPassword: !!password,
+        authHeaderType: authHeader?.split(' ')[0] || 'none'
+      });
+
       // Check for token in Authorization header first (for reset password flow)
       if (authHeader?.startsWith('Bearer ')) {
         const token = authHeader.substring(7);
@@ -342,52 +348,104 @@ export async function setupAuth(app: Express) {
           return res.status(400).json({ message: "Password is required" });
         }
 
-        // Create a supabase client and set session for password reset
-        const userSupabase = createClient(
-          process.env.SUPABASE_URL || 'https://gfrpidhedgqixkgafumc.supabase.co',
-          process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcnBpZGhlZGdxaXhrZ2FmdW1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1ODM0NjgsImV4cCI6MjA2OTE1OTQ2OH0.JaYdiISBG8vqfen_qzkOVgYRBq4V2v5CzvxjhBBsM9c'
-        );
+        // Use environment variables with secure fallbacks
+        const supabaseUrl = process.env.SUPABASE_URL || 'https://gfrpidhedgqixkgafumc.supabase.co';
+        const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcnBpZGhlZGdxaXhrZ2FmdW1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1ODM0NjgsImV4cCI6MjA2OTE1OTQ2OH0.JaYdiISBG8vqfen_qzkOVgYRBq4V2v5CzvxjhBBsM9c';
 
-        console.log("Setting session with access token...");
+        console.log("Using Supabase URL:", supabaseUrl);
+        console.log("Anon key available:", !!supabaseAnonKey);
+
+        // Create a fresh Supabase client for the reset password flow
+        const resetSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+          auth: {
+            persistSession: false,
+            autoRefreshToken: false
+          }
+        });
+
+        console.log("Setting session for password reset...");
         
-        // Try different approaches for password reset token handling
-        
-        // Approach 1: Try setSession first
-        let userSupabaseClient = userSupabase;
-        const { data: sessionData, error: sessionError } = await userSupabase.auth.setSession({
+        // Use setSession with proper error handling for reset tokens
+        const { data: sessionData, error: sessionError } = await resetSupabase.auth.setSession({
           access_token: token,
-          refresh_token: '' // Not needed for password reset
+          refresh_token: '' // Empty refresh token is acceptable for password resets
         });
 
         if (sessionError) {
-          console.error("Session setup error, trying alternative approach:", sessionError);
+          console.error("Failed to establish session with reset token:", {
+            error: sessionError.message,
+            status: sessionError.status,
+            details: sessionError
+          });
           
-          // Approach 2: Try creating client with token directly in auth headers
-          userSupabaseClient = createClient(
-            process.env.SUPABASE_URL || 'https://gfrpidhedgqixkgafumc.supabase.co',
-            process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcnBpZGhlZGdxaXhrZ2FmdW1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1ODM0NjgsImV4cCI6MjA2OTE1OTQ2OH0.JaYdiISBG8vqfen_qzkOVgYRBq4V2v5CzvxjhBBsM9c',
-            {
-              auth: {
-                persistSession: false
-              },
-              global: {
-                headers: {
-                  Authorization: `Bearer ${token}`
-                }
+          // Try alternative approach: Verify the token first
+          console.log("Attempting token verification...");
+          
+          const { data: userData, error: userError } = await resetSupabase.auth.getUser(token);
+          
+          if (userError || !userData?.user) {
+            console.error("Token verification failed:", userError?.message || 'No user data');
+            return res.status(401).json({ 
+              message: "Invalid or expired reset token",
+              debug: userError?.message || 'Token verification failed'
+            });
+          }
+          
+          console.log("Token is valid for user:", userData.user.email);
+          
+          // Create client with verified token in Authorization header
+          const authorizedSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+            auth: {
+              persistSession: false
+            },
+            global: {
+              headers: {
+                Authorization: `Bearer ${token}`
               }
             }
-          );
-        } else {
-          console.log("Session established for user:", sessionData.user?.email);
+          });
+          
+          console.log("Attempting password update with authorized client...");
+          const { data: updateData, error: updateError } = await authorizedSupabase.auth.updateUser({ password });
+          
+          if (updateError) {
+            console.error("Password update failed with authorized client:", updateError);
+            return res.status(400).json({ 
+              message: updateError.message || "Failed to update password",
+              debug: "Alternative auth method failed"
+            });
+          }
+          
+          console.log("Password updated successfully using alternative method");
+          return res.json({ 
+            message: "Password updated successfully",
+            method: "alternative_auth"
+          });
         }
 
-        const { error } = await userSupabaseClient.auth.updateUser({ password });
-
-        if (error) {
-          return res.status(400).json({ message: error.message });
+        if (!sessionData?.user) {
+          console.error("Session established but no user data found");
+          return res.status(401).json({ message: "Invalid session data" });
         }
 
-        res.json({ message: "Password updated successfully" });
+        console.log("Session established successfully for user:", sessionData.user.email);
+
+        // Update the password with the established session
+        const { data: updateData, error: updateError } = await resetSupabase.auth.updateUser({ password });
+
+        if (updateError) {
+          console.error("Password update failed:", updateError);
+          return res.status(400).json({ 
+            message: updateError.message || "Failed to update password",
+            debug: "Session method failed"
+          });
+        }
+
+        console.log("Password updated successfully for user:", updateData?.user?.email);
+        res.json({ 
+          message: "Password updated successfully",
+          method: "session_auth"
+        });
         return;
       }
 

@@ -246,9 +246,10 @@ app.post('/api/auth/update-password', async (req, res) => {
     const { password } = req.body;
     const authHeader = req.headers.authorization;
     
-    console.log('Update password request received:', { 
+    console.log('Production - Password update request received:', { 
       hasAuthHeader: !!authHeader,
-      hasPassword: !!password 
+      hasPassword: !!password,
+      authHeaderType: authHeader?.split(' ')[0] || 'none'
     });
     
     if (!authHeader?.startsWith('Bearer ')) {
@@ -260,40 +261,110 @@ app.post('/api/auth/update-password', async (req, res) => {
     }
 
     const token = authHeader.substring(7);
-    console.log('Extracted token:', token.substring(0, 20) + '...');
+    console.log('Production - Extracted token:', token.substring(0, 20) + '...');
     
-    // Create a supabase client with the user's token for authentication
-    // For reset password tokens, we need to set the session first
-    const userSupabase = createClient(
-      process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://gfrpidhedgqixkgafumc.supabase.co',
-      process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcnBpZGhlZGdxaXhrZ2FmdW1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1ODM0NjgsImV4cCI6MjA2OTE1OTQ2OH0.JaYdiISBG8vqfen_qzkOVgYRBq4V2v5CzvxjhBBsM9c'
-    );
+    // Use environment variables with secure fallbacks
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://gfrpidhedgqixkgafumc.supabase.co';
+    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcnBpZGhlZGdxaXhrZ2FmdW1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1ODM0NjgsImV4cCI6MjA2OTE1OTQ2OH0.JaYdiISBG8vqfen_qzkOVgYRBq4V2v5CzvxjhBBsM9c';
 
-    // Set the session explicitly for password reset tokens
-    const { data: sessionData, error: sessionError } = await userSupabase.auth.setSession({
+    console.log('Production - Using Supabase URL:', supabaseUrl);
+    console.log('Production - Anon key available:', !!supabaseAnonKey);
+
+    // Create a fresh Supabase client for the reset password flow
+    const resetSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false
+      }
+    });
+
+    console.log('Production - Setting session for password reset...');
+    
+    // Use setSession with proper error handling for reset tokens
+    const { data: sessionData, error: sessionError } = await resetSupabase.auth.setSession({
       access_token: token,
-      refresh_token: '' // Not needed for password reset
+      refresh_token: '' // Empty refresh token is acceptable for password resets
     });
 
     if (sessionError) {
-      console.error('Session setup error:', sessionError);
-      return res.status(401).json({ message: 'Invalid or expired reset token' });
+      console.error('Production - Failed to establish session with reset token:', {
+        error: sessionError.message,
+        status: sessionError.status,
+        details: sessionError
+      });
+      
+      // Try alternative approach: Verify the token first
+      console.log('Production - Attempting token verification...');
+      
+      const { data: userData, error: userError } = await resetSupabase.auth.getUser(token);
+      
+      if (userError || !userData?.user) {
+        console.error('Production - Token verification failed:', userError?.message || 'No user data');
+        return res.status(401).json({ 
+          message: 'Invalid or expired reset token',
+          debug: userError?.message || 'Token verification failed'
+        });
+      }
+      
+      console.log('Production - Token is valid for user:', userData.user.email);
+      
+      // Create client with verified token in Authorization header
+      const authorizedSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          persistSession: false
+        },
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      });
+      
+      console.log('Production - Attempting password update with authorized client...');
+      const { data: updateData, error: updateError } = await authorizedSupabase.auth.updateUser({ password });
+      
+      if (updateError) {
+        console.error('Production - Password update failed with authorized client:', updateError);
+        return res.status(400).json({ 
+          message: updateError.message || 'Failed to update password',
+          debug: 'Alternative auth method failed'
+        });
+      }
+      
+      console.log('Production - Password updated successfully using alternative method');
+      return res.json({ 
+        message: 'Password updated successfully',
+        method: 'alternative_auth',
+        user: updateData?.user
+      });
     }
 
-    console.log('Session established successfully for user:', sessionData.user?.email);
-
-    // Now update the password with the authenticated session
-    const { data, error } = await userSupabase.auth.updateUser({ password });
-
-    if (error) {
-      console.error('Password update error:', error);
-      return res.status(400).json({ message: error.message });
+    if (!sessionData?.user) {
+      console.error('Production - Session established but no user data found');
+      return res.status(401).json({ message: 'Invalid session data' });
     }
 
-    console.log('Password updated successfully for user:', data.user?.email);
-    res.json({ message: 'Password updated successfully', user: data.user });
+    console.log('Production - Session established successfully for user:', sessionData.user.email);
+
+    // Update the password with the established session
+    const { data: updateData, error: updateError } = await resetSupabase.auth.updateUser({ password });
+
+    if (updateError) {
+      console.error('Production - Password update failed:', updateError);
+      return res.status(400).json({ 
+        message: updateError.message || 'Failed to update password',
+        debug: 'Session method failed'
+      });
+    }
+
+    console.log('Production - Password updated successfully for user:', updateData?.user?.email);
+    res.json({ 
+      message: 'Password updated successfully',
+      method: 'session_auth',
+      user: updateData?.user
+    });
   } catch (error) {
-    console.error('Update password error:', error);
+    console.error('Production - Update password error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
