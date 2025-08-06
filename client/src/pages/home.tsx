@@ -5,11 +5,15 @@ import DashboardLayout from "@/components/layout/dashboard-layout";
 import DashboardHeader from "@/components/dashboard/dashboard-header";
 import StatsCards from "@/components/dashboard/stats-cards";
 import QuickActions from "@/components/dashboard/quick-actions";
+import RecentActivity from "@/components/dashboard/recent-activity";
+import UsageAnalytics from "@/components/dashboard/usage-analytics";
+import FavoritesShortcuts from "@/components/dashboard/favorites-shortcuts";
 import GenerationHistory from "@/components/generation-history";
 import SubscriptionManager from "@/components/subscription-manager";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
-import { Crown, Plus } from "lucide-react";
+import { Crown, Plus, LayoutGrid, Activity, BarChart3, Heart } from "lucide-react";
 
 export default function Home() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -66,19 +70,69 @@ export default function Home() {
       </DashboardHeader>
 
       <div className="container mx-auto px-6 py-6 space-y-8">
-        {/* Stats Overview */}
+        {/* Enhanced Stats Overview */}
         <StatsCards />
 
-        {/* Quick Actions */}
-        <QuickActions />
-
-        {/* Subscription Manager for Free Users */}
+        {/* Subscription Manager for Free Users - Priority Display */}
         {(user as any)?.subscriptionType === "free" && (
           <SubscriptionManager />
         )}
 
-        {/* Recent Activity */}
-        <GenerationHistory />
+        {/* Main Dashboard Tabs */}
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="glass-card w-full justify-start">
+            <TabsTrigger value="overview" className="flex items-center space-x-2">
+              <LayoutGrid className="w-4 h-4" />
+              <span>Overview</span>
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="flex items-center space-x-2">
+              <Activity className="w-4 h-4" />
+              <span>Recent Activity</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center space-x-2">
+              <BarChart3 className="w-4 h-4" />
+              <span>Analytics</span>
+            </TabsTrigger>
+            <TabsTrigger value="shortcuts" className="flex items-center space-x-2">
+              <Heart className="w-4 h-4" />
+              <span>Shortcuts</span>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab - Main Dashboard */}
+          <TabsContent value="overview" className="space-y-8">
+            {/* Quick Actions Grid */}
+            <QuickActions />
+            
+            {/* Two Column Layout for Activity & History */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+              <RecentActivity />
+              <div className="space-y-6">
+                <GenerationHistory />
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Activity Tab */}
+          <TabsContent value="activity" className="space-y-8">
+            <RecentActivity />
+            <GenerationHistory />
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-8">
+            <UsageAnalytics />
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+              <StatsCards />
+              <RecentActivity />
+            </div>
+          </TabsContent>
+
+          {/* Shortcuts Tab */}
+          <TabsContent value="shortcuts" className="space-y-8">
+            <FavoritesShortcuts />
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
