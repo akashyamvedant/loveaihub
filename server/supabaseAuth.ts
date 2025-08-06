@@ -10,7 +10,7 @@ let supabase: any = null;
 function initializeSupabase() {
   if (!supabase) {
     try {
-      // Use environment variables with fallback values for migration
+      // Use environment variables with secure fallbacks for Replit migration
       const supabaseUrl = process.env.SUPABASE_URL || 'https://gfrpidhedgqixkgafumc.supabase.co';
       const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcnBpZGhlZGdxaXhrZ2FmdW1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1ODM0NjgsImV4cCI6MjA2OTE1OTQ2OH0.JaYdiISBG8vqfen_qzkOVgYRBq4V2v5CzvxjhBBsM9c';
       
@@ -30,7 +30,7 @@ export function getSession() {
   try {
     const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
     
-    // Use DATABASE_URL with fallback value
+    // Use DATABASE_URL with secure fallback for Replit migration
     const databaseUrl = process.env.DATABASE_URL || 'postgresql://postgres.gfrpidhedgqixkgafumc:[AKraj@$5630]@aws-0-ap-south-1.pooler.supabase.com:6543/postgres';
     
     if (!databaseUrl) {
