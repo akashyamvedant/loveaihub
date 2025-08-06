@@ -318,38 +318,83 @@ app.post('/api/auth/update-password', async (req, res) => {
       console.log('Production - Trying admin client fallback...');
       
       try {
-        // Create service role client if available
-        const adminSupabase = createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey, {
-          auth: {
-            persistSession: false
-          }
-        });
+        // Check if service role key is available
+        const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        console.log('Production - Service role key available:', !!serviceRoleKey);
+        console.log('Production - Service role key length:', serviceRoleKey?.length || 0);
         
-        // Update password directly using user ID
-        const { data: adminUpdateData, error: adminUpdateError } = await adminSupabase.auth.admin.updateUserById(
-          userData.user.id,
-          { password }
-        );
-        
-        if (adminUpdateError) {
-          console.error('Production - Admin update failed:', adminUpdateError);
+        if (!serviceRoleKey) {
+          console.error('Production - No service role key available for admin fallback');
           return res.status(400).json({ 
-            message: 'Failed to update password - please try requesting a new reset link',
-            debug: 'All authentication methods failed'
+            message: 'Failed to update password - authentication service unavailable',
+            debug: 'No service role key configured'
           });
         }
         
-        console.log('Production - Password updated successfully using admin method');
+        // Create service role client with proper configuration
+        const adminSupabase = createClient(supabaseUrl, serviceRoleKey, {
+          auth: {
+            persistSession: false,
+            autoRefreshToken: false
+          }
+        });
+        
+        console.log('Production - Attempting admin password update for user ID:', userData.user.id);
+        
+        // Update password directly using user ID with enhanced error handling
+        const { data: adminUpdateData, error: adminUpdateError } = await adminSupabase.auth.admin.updateUserById(
+          userData.user.id,
+          { 
+            password: password,
+            email_confirm: true // Ensure email doesn't need re-confirmation
+          }
+        );
+        
+        if (adminUpdateError) {
+          console.error('Production - Admin update failed:', {
+            error: adminUpdateError.message,
+            status: adminUpdateError.status,
+            details: adminUpdateError
+          });
+          
+          // Try alternative admin approach
+          console.log('Production - Trying alternative admin approach...');
+          
+          const { data: altUpdateData, error: altUpdateError } = await adminSupabase.auth.admin.updateUserById(
+            userData.user.id,
+            { password }
+          );
+          
+          if (altUpdateError) {
+            console.error('Production - Alternative admin update also failed:', altUpdateError);
+            return res.status(400).json({ 
+              message: 'Failed to update password - please try requesting a new reset link',
+              debug: `Admin auth failed: ${altUpdateError.message}`
+            });
+          }
+          
+          console.log('Production - Password updated successfully using alternative admin method');
+          return res.json({ 
+            message: 'Password updated successfully',
+            method: 'admin_auth_alt',
+            user: altUpdateData?.user
+          });
+        }
+        
+        console.log('Production - Password updated successfully using admin method for user:', adminUpdateData?.user?.email);
         return res.json({ 
           message: 'Password updated successfully',
           method: 'admin_auth',
           user: adminUpdateData?.user
         });
       } catch (adminError) {
-        console.error('Production - Admin client approach failed:', adminError);
+        console.error('Production - Admin client approach failed with exception:', {
+          error: adminError.message,
+          stack: adminError.stack
+        });
         return res.status(400).json({ 
-          message: updateError.message || 'Failed to update password',
-          debug: 'Standard and admin auth methods failed'
+          message: 'Failed to update password - please try requesting a new reset link',
+          debug: `Admin exception: ${adminError.message}`
         });
       }
     }
