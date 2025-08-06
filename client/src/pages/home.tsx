@@ -69,7 +69,7 @@ export default function Home() {
         </Link>
       </DashboardHeader>
 
-      <div className="container mx-auto px-6 py-6 space-y-8">
+      <div className="flex-1 container mx-auto px-6 py-6 space-y-8">
         {/* Enhanced Stats Overview */}
         <StatsCards />
 

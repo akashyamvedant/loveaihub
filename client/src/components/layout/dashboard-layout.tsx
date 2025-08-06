@@ -336,7 +336,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   );
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex min-h-screen bg-background">
       {/* Desktop Sidebar */}
       <div className={`
         hidden lg:flex transition-all duration-300 ease-in-out
@@ -362,8 +362,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       </Sheet>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {children}
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 overflow-y-auto">
+          {children}
+        </div>
       </div>
     </div>
   );
