@@ -379,8 +379,9 @@ export async function setupAuth(app: Express) {
           console.log("Service role key available:", !!serviceRoleKey);
           
           if (!serviceRoleKey) {
+            console.error("CRITICAL: No service role key available!");
             return res.status(400).json({ 
-              message: "Service configuration error",
+              message: "Failed to update password - authentication service unavailable",
               debug: "No service role key configured"
             });
           }
@@ -517,7 +518,10 @@ export async function setupAuth(app: Express) {
           
         } catch (directAdminError: any) {
           console.error("Direct admin approach failed:", directAdminError);
-          // Continue to old flow as fallback
+          return res.status(400).json({ 
+            message: "Failed to update password - authentication service unavailable",
+            debug: `Admin error: ${directAdminError?.message || 'Unknown error'}`
+          });
         }
         
         // This code should not be reached due to the admin approach above

@@ -162,7 +162,11 @@ export default function ResetPassword() {
       const responseData = await response.json();
       console.log('Password update response:', response.status, responseData);
 
-      if (!response.ok) {
+      // Check for successful response (200) regardless of response.ok
+      if (response.status === 200 && responseData.message) {
+        console.log('Password update successful:', responseData.message);
+        // Continue to success handling
+      } else if (!response.ok) {
         throw new Error(responseData.message || 'Failed to update password');
       }
 
