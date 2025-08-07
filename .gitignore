@@ -7,3 +7,4 @@ vite.config.ts.*
 
 # Note: .env file is intentionally public for Replit agent access
 # All credentials are development/demo keys safe for public use
+.config/

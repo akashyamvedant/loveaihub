@@ -30,9 +30,27 @@ export function getSession() {
   try {
     const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
     
-    // Use DATABASE_URL with secure fallback for Replit migration
-    const databaseUrl = process.env.DATABASE_URL || 'postgresql://postgres.gfrpidhedgqixkgafumc:[AKraj@$5630]@aws-0-ap-south-1.pooler.supabase.com:6543/postgres';
-    
+    // For development, always use memory store to avoid database session issues
+    if (process.env.NODE_ENV !== "production") {
+      console.log("Using memory store for sessions in development");
+      const MemoryStore = session.MemoryStore;
+      return session({
+        secret: process.env.SESSION_SECRET || "8788fdfd5215934707e38407bcb2920b2aa6716b60801fec6ab1ff6ed34cf6d7",
+        store: new MemoryStore(),
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+          httpOnly: true,
+          secure: false, // Allow non-HTTPS in development
+          maxAge: sessionTtl,
+          sameSite: 'lax'
+        },
+      });
+    }
+
+    // Use DATABASE_URL with secure fallback for production
+    const databaseUrl = process.env.DATABASE_URL || 'postgresql://postgres.gfrpidhedgqixkgafumc:AKraj%40%245630@aws-0-ap-south-1.pooler.supabase.com:6543/postgres';
+
     if (!databaseUrl) {
       console.warn("DATABASE_URL not available, using memory store");
       const MemoryStore = session.MemoryStore;
@@ -135,20 +153,33 @@ export async function setupAuth(app: Express) {
           console.warn("Database operation failed, continuing without DB user:", dbError);
         }
 
-        // Store user session
+        // Store user session and save immediately
         (req.session as any).user = {
           id: data.user.id,
           email: data.user.email,
           access_token: data.session?.access_token,
           refresh_token: data.session?.refresh_token,
         };
-      }
 
-      res.json({ 
-        user: data.user, 
-        session: data.session,
-        message: data.user?.email_confirmed_at ? "User created successfully" : "Please check your email to confirm your account"
-      });
+        // Force session save before responding
+        req.session.save((err) => {
+          if (err) {
+            console.error("Session save error:", err);
+            return res.status(500).json({ message: "Session save failed" });
+          }
+          res.json({
+            user: data.user,
+            session: data.session,
+            message: data.user?.email_confirmed_at ? "User created successfully" : "Please check your email to confirm your account"
+          });
+        });
+      } else {
+        res.json({
+          user: data.user,
+          session: data.session,
+          message: data.user?.email_confirmed_at ? "User created successfully" : "Please check your email to confirm your account"
+        });
+      }
     } catch (error) {
       console.error("Signup error:", error);
       res.status(500).json({ message: "Internal server error" });
@@ -178,7 +209,7 @@ export async function setupAuth(app: Express) {
         return res.status(401).json({ message: error.message });
       }
 
-      if (data.user) {
+      if (data.user && data.session) {
         // Try to update user in database, but continue if it fails
         try {
           await storage.upsertUser({
@@ -189,19 +220,21 @@ export async function setupAuth(app: Express) {
             profileImageUrl: data.user.user_metadata?.avatar_url,
           });
         } catch (dbError) {
-          console.warn("Database operation failed, continuing without DB user:", dbError);
+          // Silently continue if database operation fails
         }
 
         // Store user session
         (req.session as any).user = {
           id: data.user.id,
           email: data.user.email,
-          access_token: data.session?.access_token,
-          refresh_token: data.session?.refresh_token,
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
         };
-      }
 
-      res.json({ user: data.user, session: data.session });
+        res.json({ user: data.user, session: data.session, message: "Signed in successfully" });
+      } else {
+        res.status(401).json({ message: "Authentication failed" });
+      }
     } catch (error) {
       console.error("Signin error:", error);
       res.status(500).json({ message: "Internal server error" });

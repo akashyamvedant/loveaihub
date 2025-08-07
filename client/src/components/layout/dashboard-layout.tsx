@@ -45,7 +45,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigationItems = [
     {
       title: "Dashboard",
-      href: "/",
+      href: "/dashboard",
       icon: Home,
       description: "Overview and analytics",
       badge: null,
@@ -131,6 +131,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   const isActive = (href: string) => {
+    if (href === "/dashboard") return location === "/" || location === "/dashboard" || location === "/home";
     if (href === "/") return location === "/";
     return location.startsWith(href);
   };
@@ -140,7 +141,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Header with enhanced styling */}
       <div className="relative p-6 border-b border-border/20 bg-gradient-to-r from-primary/5 to-purple-500/5">
         <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-3 group">
+          <Link href="/dashboard" className="flex items-center space-x-3 group">
             <div className="relative">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-primary to-purple-500 flex items-center justify-center shadow-lg transform group-hover:scale-105 transition-transform duration-200">
                 <Sparkles className="w-6 h-6 text-white" />

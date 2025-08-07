@@ -127,24 +127,14 @@ export const authApi = {
   },
 
   async getCurrentUser() {
-    // Get token from storage (localStorage or cookies)
-    const token = authStorage.getToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    // Add Authorization header if we have a token
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    
     const response = await fetch('/api/auth/user', {
       method: 'GET',
-      credentials: 'include', // Include cookies in request
-      headers,
+      credentials: 'include', // Include cookies in request (sessions)
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
-    
+
     if (!response.ok) {
       if (response.status === 401) {
         // Clear any stored tokens

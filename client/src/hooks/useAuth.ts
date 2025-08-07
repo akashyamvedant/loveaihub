@@ -30,12 +30,19 @@ export function useSignUp() {
       firstName?: string;
       lastName?: string;
     }) => authApi.signUp(email, password, firstName, lastName),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       toast({
         title: "Success",
         description: data.message || "Account created successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+
+      // Invalidate and refetch the auth query
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+
+      // Wait a bit longer for session to be established, then redirect
+      setTimeout(() => {
+        window.location.replace("/dashboard");
+      }, 1000);
     },
     onError: (error) => {
       toast({
@@ -54,12 +61,19 @@ export function useSignIn() {
   return useMutation({
     mutationFn: ({ email, password }: { email: string; password: string }) =>
       authApi.signIn(email, password),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast({
         title: "Success",
         description: "Signed in successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+
+      // Invalidate and refetch the auth query
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+
+      // Wait a bit longer for session to be established, then redirect
+      setTimeout(() => {
+        window.location.replace("/dashboard");
+      }, 1000);
     },
     onError: (error) => {
       toast({

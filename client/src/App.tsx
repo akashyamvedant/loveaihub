@@ -21,6 +21,7 @@ import Admin from "@/pages/admin";
 import Pricing from "@/pages/pricing";
 import ResetPassword from "@/pages/reset-password";
 import ResetPasswordSimple from "@/pages/reset-password-simple";
+import Dashboard from "@/pages/dashboard";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -52,14 +53,19 @@ function Router() {
     }
   }, [toast]);
 
-  // Show authenticated routes only if both conditions are true
-  // After logout, both should be false
+  // Show authenticated routes only if user is authenticated
   // Special case: Always allow reset-password page regardless of auth state
   const isResetPasswordPage = window.location.pathname === '/reset-password';
-  const hasAuth = !isResetPasswordPage && authStorage.hasAuth() && (isAuthenticated || isLoading);
-  
+  const hasAuth = !isResetPasswordPage && isAuthenticated;
+
   // Debug logging
-  console.log('Auth state:', { isAuthenticated, isLoading, hasAuth, hasStoredAuth: authStorage.hasAuth() });
+  console.log('Auth state:', {
+    isAuthenticated,
+    isLoading,
+    hasAuth,
+    hasStoredAuth: authStorage.hasAuth(),
+    currentPath: window.location.pathname
+  });
   
   // Force auth refresh when landing on /home after OAuth
   useEffect(() => {
@@ -82,6 +88,7 @@ function Router() {
         <>
           <Route path="/" component={Home} />
           <Route path="/home" component={Home} />
+          <Route path="/dashboard" component={Home} />
           <Route path="/image-generation" component={ImageGeneration} />
           <Route path="/video-generation" component={VideoGeneration} />
           <Route path="/ai-chat" component={AiChat} />
@@ -100,6 +107,10 @@ function Router() {
           <Route path="/reset-password" component={ResetPassword} />
         </>
       )}
+
+      {/* Dashboard route accessible regardless of immediate auth state */}
+      <Route path="/dashboard" component={Dashboard} />
+
       <Route component={NotFound} />
     </Switch>
   );
