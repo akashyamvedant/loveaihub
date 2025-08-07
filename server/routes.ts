@@ -11,6 +11,29 @@ import multer from "multer";
 const upload = multer({ storage: multer.memoryStorage() });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // CORS configuration for session cookies
+  app.use((req, res, next) => {
+    const origin = req.get('Origin');
+
+    // Allow same-origin requests and specific development origins
+    if (!origin ||
+        origin === `${req.protocol}://${req.get('host')}` ||
+        origin.includes('localhost') ||
+        origin.includes('127.0.0.1')) {
+      res.header('Access-Control-Allow-Origin', origin || '*');
+    }
+
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+
+    next();
+  });
+
   // Auth middleware
   await setupAuth(app);
 

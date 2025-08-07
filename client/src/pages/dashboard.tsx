@@ -21,9 +21,10 @@ export default function Dashboard() {
   const [location, navigate] = useLocation();
 
   useEffect(() => {
-    // Give extra time for authentication to be established
+    // Give more time for authentication to be established and stabilize
     const checkAuth = setTimeout(() => {
       if (!isLoading && !isAuthenticated) {
+        console.log("Dashboard: Authentication check failed after timeout", { isLoading, isAuthenticated });
         toast({
           title: "Please sign in",
           description: "You need to be signed in to access the dashboard",
@@ -31,7 +32,7 @@ export default function Dashboard() {
         });
         navigate("/");
       }
-    }, 2000); // Wait 2 seconds before checking authentication
+    }, 5000); // Wait 5 seconds for session to stabilize
 
     return () => clearTimeout(checkAuth);
   }, [isAuthenticated, isLoading, toast, navigate]);

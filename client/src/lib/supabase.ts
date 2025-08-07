@@ -88,9 +88,11 @@ export const authApi = {
       }
 
       const data = await response.json();
-      
+
       // Store the session token for future requests
-      if (data.session?.access_token) {
+      if (data.access_token) {
+        authStorage.setToken(data.access_token);
+      } else if (data.session?.access_token) {
         authStorage.setToken(data.session.access_token);
       }
 
@@ -127,12 +129,20 @@ export const authApi = {
   },
 
   async getCurrentUser() {
+    // Try token-based auth first
+    const token = authStorage.getToken();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch('/api/auth/user', {
       method: 'GET',
       credentials: 'include', // Include cookies in request (sessions)
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
     });
 
     if (!response.ok) {
@@ -191,7 +201,7 @@ export const authApi = {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          redirectUrl: window.location.origin
+          redirectUrl: 'http://localhost:5000'
         }),
       });
 

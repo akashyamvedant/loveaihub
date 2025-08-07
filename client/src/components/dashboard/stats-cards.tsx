@@ -85,7 +85,7 @@ export default function StatsCards() {
     <div className="space-y-6">
       {/* Main Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => {
+        {mainStats.map((stat, index) => {
           const Icon = stat.icon;
           return (
             <Card key={index} className="glass-card hover:scale-105 transition-transform">

@@ -29,21 +29,23 @@ export { initializeSupabase };
 export function getSession() {
   try {
     const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
-    
+
     // For development, always use memory store to avoid database session issues
     if (process.env.NODE_ENV !== "production") {
-      console.log("Using memory store for sessions in development");
-      const MemoryStore = session.MemoryStore;
+      console.log("Using simplified memory store for sessions in development");
+
+      // Use proper session configuration for development
       return session({
-        secret: process.env.SESSION_SECRET || "8788fdfd5215934707e38407bcb2920b2aa6716b60801fec6ab1ff6ed34cf6d7",
-        store: new MemoryStore(),
+        secret: "loveaihub-session-secret-dev",
         resave: false,
-        saveUninitialized: false,
+        saveUninitialized: false, // Only save sessions when data is added
+        name: "connect.sid", // Use default session cookie name
         cookie: {
-          httpOnly: true,
-          secure: false, // Allow non-HTTPS in development
-          maxAge: sessionTtl,
-          sameSite: 'lax'
+          httpOnly: true, // Secure cookie handling
+          secure: false, // Allow over HTTP in development
+          sameSite: 'lax', // Allow cross-origin requests
+          maxAge: 24 * 60 * 60 * 1000, // 24 hours
+          path: '/', // Make cookie available for entire site
         },
       });
     }
@@ -109,6 +111,20 @@ export async function setupAuth(app: Express) {
     
     // Initialize Supabase
     initializeSupabase();
+
+    // Session test endpoint for debugging
+    app.get("/api/test-session", (req, res) => {
+      if (!req.session.views) {
+        req.session.views = 0;
+      }
+      req.session.views++;
+
+      res.json({
+        sessionID: req.sessionID,
+        views: req.session.views,
+        session: req.session
+      });
+    });
 
     // Sign up endpoint
   app.post("/api/auth/signup", async (req, res) => {
@@ -189,6 +205,10 @@ export async function setupAuth(app: Express) {
   // Sign in endpoint
   app.post("/api/auth/signin", async (req, res) => {
     try {
+      console.log("=== SIGNIN REQUEST ===");
+      console.log("Session ID:", req.sessionID);
+      console.log("Session before:", req.session);
+
       const { email, password } = req.body;
 
       if (!email || !password) {
@@ -231,7 +251,22 @@ export async function setupAuth(app: Express) {
           refresh_token: data.session.refresh_token,
         };
 
-        res.json({ user: data.user, session: data.session, message: "Signed in successfully" });
+        console.log("Session after setting user:", req.session);
+
+        // Force session save before responding
+        req.session.save((err) => {
+          if (err) {
+            console.error("Session save error:", err);
+            return res.status(500).json({ message: "Session save failed" });
+          }
+          console.log("Session saved successfully for user:", data.user.email);
+          res.json({
+            user: data.user,
+            session: data.session,
+            access_token: data.session.access_token, // Include token for client storage
+            message: "Signed in successfully"
+          });
+        });
       } else {
         res.status(401).json({ message: "Authentication failed" });
       }
@@ -297,9 +332,23 @@ export async function setupAuth(app: Express) {
   // Get current user endpoint
   app.get("/api/auth/user", async (req, res) => {
     try {
-      const sessionUser = (req.session as any).user;
+      console.log("=== GET USER REQUEST ===");
+      console.log("Session ID:", req.sessionID);
+      console.log("Session:", req.session);
+      console.log("Session user:", (req.session as any).user);
 
-      if (!sessionUser?.access_token) {
+      const sessionUser = (req.session as any).user;
+      const authHeader = req.headers.authorization;
+      let access_token = sessionUser?.access_token;
+
+      // Try token-based auth if no session
+      if (!access_token && authHeader?.startsWith('Bearer ')) {
+        access_token = authHeader.substring(7);
+        console.log("Using token-based auth");
+      }
+
+      if (!access_token) {
+        console.log("No session user or access token - returning 401");
         return res.status(401).json({ message: "Unauthorized" });
       }
 
@@ -310,7 +359,7 @@ export async function setupAuth(app: Express) {
         {
           global: {
             headers: {
-              Authorization: `Bearer ${sessionUser.access_token}`
+              Authorization: `Bearer ${access_token}`
             }
           }
         }
@@ -719,8 +768,9 @@ export async function setupAuth(app: Express) {
     try {
       console.log('OAuth callback received:', {
         query: req.query,
-        headers: req.headers,
-        url: req.url
+        fullUrl: req.url,
+        referer: req.get('referer'),
+        host: req.get('host')
       });
 
       const { code, error: oauthError, access_token, refresh_token } = req.query;
@@ -749,18 +799,14 @@ export async function setupAuth(app: Express) {
 
       // Handle authorization code flow
       if (!code) {
-        console.error('No code or access_token in callback. Full query:', JSON.stringify(req.query, null, 2));
-        
-        // Instead of showing error page, redirect to home with fallback option
-        const referer = req.get('referer');
-        console.log('OAuth callback failed, redirecting to email authentication fallback');
-        
-        if (referer && referer.includes('accounts.google.com')) {
-          // User came from Google but no code received - redirect to email signup
-          return res.redirect(`${baseUrl}/?auth=fallback&message=` + encodeURIComponent("Google sign-in temporarily unavailable. Please use email registration."));
-        }
-        
-        return res.redirect(`${baseUrl}/?error=missing_auth_data&fallback=email`);
+        console.error('OAuth callback failed - no authorization code received');
+        console.error('Full URL:', req.url);
+        console.error('Query params:', JSON.stringify(req.query, null, 2));
+        console.error('Headers:', JSON.stringify(req.headers, null, 2));
+
+        // Detailed error message for debugging
+        return res.redirect(`${baseUrl}/?error=oauth_configuration_error&message=` +
+          encodeURIComponent("Google OAuth configuration issue. Please check Supabase OAuth settings."));
       }
 
       console.log('Exchanging code for session:', code);
@@ -802,8 +848,8 @@ export async function setupAuth(app: Express) {
         };
       }
 
-      // Redirect to dashboard 
-      res.redirect(`${baseUrl}/`);
+      // Redirect to dashboard
+      res.redirect(`${baseUrl}/dashboard`);
     } catch (error: any) {
       console.error('OAuth callback error:', error);
       const baseUrl = `${req.protocol}://${req.get('host')}`;

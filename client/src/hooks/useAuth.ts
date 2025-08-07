@@ -7,7 +7,14 @@ export function useAuth() {
   const { data: authData, isLoading } = useQuery({
     queryKey: ["/api/auth/user"],
     queryFn: () => authApi.getCurrentUser(),
-    retry: false,
+    retry: (failureCount, error: any) => {
+      // Retry up to 3 times if it's a network error or 401 (could be session timing issue)
+      if (failureCount < 3 && (error?.status === 401 || error?.message?.includes('fetch'))) {
+        return true;
+      }
+      return false;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000), // Exponential backoff: 2s, 4s, 6s
   });
 
   const user = authData?.user;
