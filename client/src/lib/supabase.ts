@@ -137,6 +137,9 @@ export const authApi = {
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
+      console.log('Sending request with stored token:', token.substring(0, 20) + '...');
+    } else {
+      console.log('No stored token found, trying session-only auth');
     }
 
     const response = await fetch('/api/auth/user', {
@@ -145,17 +148,30 @@ export const authApi = {
       headers,
     });
 
+    console.log('Auth response status:', response.status);
+
     if (!response.ok) {
       if (response.status === 401) {
+        console.log('Authentication failed, clearing stored tokens');
         // Clear any stored tokens
         authStorage.removeToken();
         return null; // User not authenticated
       }
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to get user');
+
+      let errorMessage = 'Failed to get user';
+      try {
+        const error = await response.json();
+        errorMessage = error.message || errorMessage;
+      } catch (e) {
+        console.log('Could not parse error response');
+      }
+
+      throw new Error(errorMessage);
     }
 
-    return response.json();
+    const userData = await response.json();
+    console.log('Authentication successful for:', userData.user?.email);
+    return userData;
   },
 
   async resetPassword(email: string) {

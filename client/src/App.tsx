@@ -22,6 +22,7 @@ import Pricing from "@/pages/pricing";
 import ResetPassword from "@/pages/reset-password";
 import ResetPasswordSimple from "@/pages/reset-password-simple";
 import Dashboard from "@/pages/dashboard";
+import Debug from "@/pages/debug";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -98,6 +99,7 @@ function Router() {
           <Route path="/admin" component={Admin} />
           <Route path="/blog" component={Blog} />
           <Route path="/pricing" component={Pricing} />
+          <Route path="/debug" component={Debug} />
         </>
       ) : (
         <>

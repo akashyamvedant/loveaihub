@@ -334,8 +334,8 @@ export async function setupAuth(app: Express) {
     try {
       console.log("=== GET USER REQUEST ===");
       console.log("Session ID:", req.sessionID);
-      console.log("Session:", req.session);
       console.log("Session user:", (req.session as any).user);
+      console.log("Auth header:", req.headers.authorization);
 
       const sessionUser = (req.session as any).user;
       const authHeader = req.headers.authorization;
@@ -344,37 +344,47 @@ export async function setupAuth(app: Express) {
       // Try token-based auth if no session
       if (!access_token && authHeader?.startsWith('Bearer ')) {
         access_token = authHeader.substring(7);
-        console.log("Using token-based auth");
+        console.log("Using token from Authorization header");
       }
 
       if (!access_token) {
-        console.log("No session user or access token - returning 401");
-        return res.status(401).json({ message: "Unauthorized" });
+        console.log("No access token found - unauthorized");
+        return res.status(401).json({ message: "Unauthorized - No access token" });
       }
 
-      // Create a supabase client with the user's token
-      const userSupabase = createClient(
-        process.env.SUPABASE_URL!,
-        process.env.SUPABASE_ANON_KEY!,
-        {
-          global: {
-            headers: {
-              Authorization: `Bearer ${access_token}`
-            }
+      console.log("Access token found:", access_token.substring(0, 20) + "...");
+
+      // Create a supabase client with the user's token using fallback values
+      const supabaseUrl = process.env.SUPABASE_URL || 'https://gfrpidhedgqixkgafumc.supabase.co';
+      const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcnBpZGhlZGdxaXhrZ2FmdW1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1ODM0NjgsImV4cCI6MjA2OTE1OTQ2OH0.JaYdiISBG8vqfen_qzkOVgYRBq4V2v5CzvxjhBBsM9c';
+
+      const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+        global: {
+          headers: {
+            Authorization: `Bearer ${access_token}`
           }
         }
-      );
+      });
 
       const { data: { user }, error } = await userSupabase.auth.getUser();
 
-      if (error || !user) {
-        return res.status(401).json({ message: "Unauthorized" });
+      if (error) {
+        console.error("Supabase auth error:", error);
+        return res.status(401).json({ message: "Unauthorized - Invalid token" });
       }
+
+      if (!user) {
+        console.log("No user found with token");
+        return res.status(401).json({ message: "Unauthorized - User not found" });
+      }
+
+      console.log("Authentication successful for user:", user.email);
 
       // Try to get user data from our database, fallback to Supabase user
       let dbUser = null;
       try {
         dbUser = await storage.getUser(user.id);
+        console.log("Database user found:", dbUser?.email);
       } catch (dbError) {
         console.warn("Database operation failed, using Supabase user data:", dbError);
         dbUser = {
@@ -391,7 +401,7 @@ export async function setupAuth(app: Express) {
         };
       }
 
-      res.json({ 
+      res.json({
         user: {
           id: user.id,
           email: user.email,
@@ -400,7 +410,7 @@ export async function setupAuth(app: Express) {
       });
     } catch (error) {
       console.error("Get user error:", error);
-      res.status(401).json({ message: "Unauthorized" });
+      res.status(401).json({ message: "Unauthorized - Authentication failed" });
     }
   });
 
@@ -864,37 +874,58 @@ export async function setupAuth(app: Express) {
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   try {
-    const sessionUser = (req.session as any).user;
+    console.log("=== AUTHENTICATION CHECK ===");
+    console.log("Session ID:", req.sessionID);
+    console.log("Session user:", (req.session as any).user);
+    console.log("Auth header:", req.headers.authorization);
 
-    if (!sessionUser?.access_token) {
-      return res.status(401).json({ message: "Unauthorized" });
+    const sessionUser = (req.session as any).user;
+    const authHeader = req.headers.authorization;
+    let access_token = sessionUser?.access_token;
+
+    // Try token-based auth if no session
+    if (!access_token && authHeader?.startsWith('Bearer ')) {
+      access_token = authHeader.substring(7);
+      console.log("Using token from Authorization header");
+    }
+
+    if (!access_token) {
+      console.log("No access token found - unauthorized");
+      return res.status(401).json({ message: "Unauthorized - No access token" });
     }
 
     // Create a supabase client with the user's token
-    const userSupabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_ANON_KEY!,
-      {
-        global: {
-          headers: {
-            Authorization: `Bearer ${sessionUser.access_token}`
-          }
+    const supabaseUrl = process.env.SUPABASE_URL || 'https://gfrpidhedgqixkgafumc.supabase.co';
+    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcnBpZGhlZGdxaXhrZ2FmdW1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1ODM0NjgsImV4cCI6MjA2OTE1OTQ2OH0.JaYdiISBG8vqfen_qzkOVgYRBq4V2v5CzvxjhBBsM9c';
+
+    const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${access_token}`
         }
       }
-    );
+    });
 
     const { data: { user }, error } = await userSupabase.auth.getUser();
 
-    if (error || !user) {
-      return res.status(401).json({ message: "Unauthorized" });
+    if (error) {
+      console.error("Supabase auth error:", error);
+      return res.status(401).json({ message: "Unauthorized - Invalid token" });
     }
+
+    if (!user) {
+      console.log("No user found with token");
+      return res.status(401).json({ message: "Unauthorized - User not found" });
+    }
+
+    console.log("Authentication successful for user:", user.email);
 
     // Add user to request object for use in other routes
     (req as any).currentUser = user;
-    
+
     next();
   } catch (error) {
     console.error("Authentication error:", error);
-    res.status(401).json({ message: "Unauthorized" });
+    res.status(401).json({ message: "Unauthorized - Authentication failed" });
   }
 };

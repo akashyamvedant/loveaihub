@@ -47,24 +47,45 @@ export class A4FApiService {
   constructor() {
     this.apiKey = process.env.A4F_API_KEY || process.env.A4F_API_KEY_ENV_VAR || "ddc-a4f-cd950b4d41874c21acc4792bb0a392d7";
     this.baseUrl = "https://api.a4f.co/v1";
+    console.log("A4F API initialized with key:", this.apiKey ? `${this.apiKey.substring(0, 10)}...` : "MISSING");
+    console.log("A4F API base URL:", this.baseUrl);
   }
 
   private async makeRequest(endpoint: string, data: any, method: string = "POST") {
+    console.log(`Making A4F API request to ${endpoint}:`, JSON.stringify(data, null, 2));
+    console.log(`Using API key: ${this.apiKey.substring(0, 10)}...`);
+
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       method,
       headers: {
         "Authorization": `Bearer ${this.apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(data),
+      body: method !== "GET" ? JSON.stringify(data) : undefined,
     });
 
+    console.log(`A4F API response status: ${response.status}`);
+
     if (!response.ok) {
-      const errorText = await response.text();
+      let errorText = '';
+      try {
+        errorText = await response.text();
+        console.error(`A4F API error response:`, errorText);
+      } catch (err) {
+        console.error('Failed to read error response:', err);
+        errorText = `HTTP ${response.status} ${response.statusText}`;
+      }
       throw new Error(`A4F API error: ${response.status} - ${errorText}`);
     }
 
-    return await response.json();
+    try {
+      const result = await response.json();
+      console.log(`A4F API success response:`, JSON.stringify(result, null, 2));
+      return result;
+    } catch (err) {
+      console.error('Failed to parse JSON response:', err);
+      throw new Error(`A4F API returned invalid JSON response`);
+    }
   }
 
   async enhancePrompt(prompt: string): Promise<string> {
@@ -93,7 +114,23 @@ export class A4FApiService {
   }
 
   async generateImage(request: A4FImageRequest): Promise<any> {
-    return await this.makeRequest("/images/generations", request);
+    // Ensure the request follows A4F.co documentation format
+    const a4fRequest = {
+      model: request.model,
+      prompt: request.prompt,
+      n: request.n || 1,
+      size: request.size || "1024x1024",
+      quality: request.quality || "standard",
+      style: request.style || "vivid",
+      response_format: request.response_format || "url",
+    };
+
+    console.log("=== A4F IMAGE GENERATION ===");
+    console.log("Request model:", request.model);
+    console.log("Full request:", JSON.stringify(a4fRequest, null, 2));
+    console.log("API Key being used:", this.apiKey ? `${this.apiKey.substring(0, 10)}...` : "MISSING");
+
+    return await this.makeRequest("/images/generations", a4fRequest);
   }
 
   async generateVideo(request: A4FVideoRequest): Promise<any> {
@@ -164,6 +201,22 @@ export class A4FApiService {
   // Get available models
   async getModels(): Promise<any> {
     return await this.makeRequest("/models", {}, "GET");
+  }
+
+  // Test API connection by checking usage
+  async testConnection(): Promise<any> {
+    try {
+      return await this.makeRequest("/usage", {}, "GET");
+    } catch (error) {
+      console.error("Usage endpoint failed, trying simple model list...");
+      // If usage fails, try a simpler endpoint
+      try {
+        return await this.makeRequest("/models", {}, "GET");
+      } catch (error2) {
+        console.error("Models endpoint also failed, API key might be invalid");
+        throw error2;
+      }
+    }
   }
 }
 
