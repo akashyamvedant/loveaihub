@@ -18,7 +18,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import Navigation from "@/components/navigation";
+import { BackButton } from "@/components/ui/back-button";
 import Footer from "@/components/footer";
 import {
   MessageSquare,
@@ -314,7 +314,7 @@ const chatModels = [
     category: "Exploration",
     description: "LLaMA optimized for exploration and discovery",
     capabilities: ["Exploration", "Discovery", "Research"],
-    icon: "🔍",
+    icon: "����",
     color: "bg-purple-400",
     tier: "standard"
   },
