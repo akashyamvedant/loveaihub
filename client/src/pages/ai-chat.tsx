@@ -1367,9 +1367,22 @@ export default function AiChat() {
                 </div>
                 
                 {currentModel && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/50 rounded-full">
+                  <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-slate-800/60 to-slate-700/60 backdrop-blur-sm rounded-full border border-slate-600/30">
                     <span className="text-lg">{currentModel.icon}</span>
-                    <span className="text-sm font-medium">{currentModel.name}</span>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">{currentModel.name}</span>
+                      <span className="text-xs text-slate-400">{currentModel.provider}</span>
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className={`text-xs h-5 ${
+                        currentModel.tier === 'premium' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+                        currentModel.tier === 'standard' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+                        'bg-green-500/20 text-green-400 border-green-500/30'
+                      }`}
+                    >
+                      {currentModel.tier}
+                    </Badge>
                     <Badge variant="outline" className="text-xs h-5">
                       {currentModel.category}
                     </Badge>
