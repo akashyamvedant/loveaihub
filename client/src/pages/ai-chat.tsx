@@ -1338,12 +1338,27 @@ export default function AiChat() {
 
       {!isFullscreen && <Navigation />}
       
-      <div className={`${!isFullscreen ? "pt-20" : ""} h-screen flex flex-col`}>
+      {/* Chat History Sidebar */}
+      <ChatHistorySidebar />
+
+      <div className={`${!isFullscreen ? "pt-20" : ""} h-screen flex flex-col transition-all duration-300 ${
+        showConversations ? "ml-80" : "ml-0"
+      }`}>
         {/* Chat Header */}
-        <div className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm">
+        <div className="border-b border-slate-800/50 bg-gradient-to-r from-slate-900/80 via-slate-800/80 to-slate-900/80 backdrop-blur-xl">
           <div className="max-w-4xl mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
+                {!showConversations && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowConversations(true)}
+                    className="text-slate-400 hover:text-white"
+                  >
+                    <Menu className="w-4 h-4" />
+                  </Button>
+                )}
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
                     <MessageSquare className="w-4 h-4 text-white" />
