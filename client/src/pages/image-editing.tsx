@@ -12,7 +12,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { BackButton } from "@/components/ui/back-button";
-import Footer from "@/components/footer";
 import { 
   Edit, 
   Upload, 
