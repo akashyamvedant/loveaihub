@@ -22,7 +22,7 @@ export function BackButton({
   };
 
   return (
-    <div className={`fixed top-6 left-6 z-50 animate-in fade-in-0 slide-in-from-left-4 duration-300 ${className}`}>
+    <div className={`fixed top-6 left-24 lg:left-28 z-50 animate-in fade-in-0 slide-in-from-left-4 duration-300 ${className}`}>
       <Button
         variant="ghost"
         onClick={handleBack}
@@ -52,7 +52,7 @@ export function FloatingBackButton({
   };
 
   return (
-    <div className={`fixed top-6 left-6 z-50 animate-in fade-in-0 zoom-in-90 duration-500 ${className}`}>
+    <div className={`fixed top-6 left-24 lg:left-28 z-50 animate-in fade-in-0 zoom-in-90 duration-500 ${className}`}>
       <div className="relative group">
         {/* Glow effect */}
         <div className="absolute -inset-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
