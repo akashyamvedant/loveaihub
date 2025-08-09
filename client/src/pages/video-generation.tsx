@@ -16,8 +16,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+<<<<<<< HEAD
 import { BackButton } from "@/components/ui/back-button";
 import { AppSidebar } from "@/components/ui/app-sidebar";
+=======
+import Navigation from "@/components/navigation";
+import Footer from "@/components/footer";
+>>>>>>> 1a85e838937147e3e20188ce399ab469ec0cb674
 import {
   Video,
   Play,
@@ -324,6 +329,7 @@ export default function VideoGeneration() {
   const selectedQualityData = qualityOptions.find(q => q.id === selectedQuality);
 
   return (
+<<<<<<< HEAD
     <div className="flex min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
       <AppSidebar defaultCollapsed={true} />
       <div className="flex-1 overflow-y-auto">
@@ -331,6 +337,20 @@ export default function VideoGeneration() {
 
         <div className="pt-12 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+=======
+    <div className="min-h-screen bg-slate-900 text-white">
+      <Navigation />
+      
+      <div className="pt-20 pb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Back Button */}
+          <Button variant="ghost" className="mb-6">
+            <a href="/" className="flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
+            </a>
+          </Button>
+>>>>>>> 1a85e838937147e3e20188ce399ab469ec0cb674
 
           {/* Header */}
           <div className="mb-8">
@@ -941,9 +961,15 @@ export default function VideoGeneration() {
             </TabsContent>
           </Tabs>
         </div>
+<<<<<<< HEAD
         </div>
       </div>
 
+=======
+      </div>
+
+      <Footer />
+>>>>>>> 1a85e838937147e3e20188ce399ab469ec0cb674
     </div>
   );
 }

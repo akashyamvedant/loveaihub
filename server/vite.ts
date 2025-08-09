@@ -3,7 +3,11 @@ import fs from "fs";
 import path from "path";
 import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
+<<<<<<< HEAD
 import viteConfig from "../vite.config.js";
+=======
+import viteConfig from "../vite.config";
+>>>>>>> 1a85e838937147e3e20188ce399ab469ec0cb674
 import { nanoid } from "nanoid";
 
 const viteLogger = createLogger();

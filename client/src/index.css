@@ -571,6 +571,7 @@
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
 }
+<<<<<<< HEAD
 
 /* Chat-specific enhancements */
 .chat-message-enter {
@@ -843,3 +844,5 @@
     border: 1px solid rgba(255, 255, 255, 0.2);
   }
 }
+=======
+>>>>>>> 1a85e838937147e3e20188ce399ab469ec0cb674

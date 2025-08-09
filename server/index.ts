@@ -14,6 +14,7 @@ console.log("Starting LoveAIHub server...");
     const { registerRoutes } = await import('./routes');
     console.log("✓ routes loaded");
     
+<<<<<<< HEAD
     let setupVite, serveStatic, log;
     try {
       const viteModule = await import('./vite');
@@ -27,6 +28,10 @@ console.log("Starting LoveAIHub server...");
       serveStatic = null;
       log = (message: string) => console.log(message);
     }
+=======
+    const { setupVite, serveStatic, log } = await import('./vite');
+    console.log("✓ vite loaded");
+>>>>>>> 1a85e838937147e3e20188ce399ab469ec0cb674
 
     const app = express.default();
     app.use(express.default.json());
@@ -76,6 +81,7 @@ console.log("Starting LoveAIHub server...");
 
     // Setup Vite or static files
     console.log("Setting up file serving...");
+<<<<<<< HEAD
     const isDevelopment = process.env.NODE_ENV === "development" || app.get("env") === "development";
     console.log("Environment mode:", isDevelopment ? "development" : "production");
 
@@ -94,6 +100,14 @@ console.log("Starting LoveAIHub server...");
         }
         res.send('<html><body><h1>LoveAIHub API Server</h1><p>Server is running in API-only mode. Frontend not available.</p></body></html>');
       });
+=======
+    if (app.get("env") === "development") {
+      await setupVite(app, server);
+      console.log("✓ Vite setup complete");
+    } else {
+      serveStatic(app);
+      console.log("✓ Static files setup complete");
+>>>>>>> 1a85e838937147e3e20188ce399ab469ec0cb674
     }
 
     // Start server

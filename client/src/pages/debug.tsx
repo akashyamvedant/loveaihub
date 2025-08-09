@@ -3,8 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+<<<<<<< HEAD
 import { BackButton } from "@/components/ui/back-button";
 import { AppSidebar } from "@/components/ui/app-sidebar";
+=======
+import Navigation from "@/components/navigation";
+>>>>>>> 1a85e838937147e3e20188ce399ab469ec0cb674
 
 export default function Debug() {
   const [testResults, setTestResults] = useState<any[]>([]);
@@ -121,12 +125,19 @@ export default function Debug() {
   };
 
   return (
+<<<<<<< HEAD
     <div className="flex min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
       <AppSidebar defaultCollapsed={true} />
       <div className="flex-1 overflow-y-auto">
       <BackButton />
 
       <div className="pt-12 pb-12">
+=======
+    <div className="min-h-screen bg-slate-900 text-white">
+      <Navigation />
+      
+      <div className="pt-20 pb-12">
+>>>>>>> 1a85e838937147e3e20188ce399ab469ec0cb674
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
             <h1 className="text-4xl font-bold mb-4">
@@ -219,7 +230,10 @@ export default function Debug() {
           </div>
         </div>
       </div>
+<<<<<<< HEAD
       </div>
+=======
+>>>>>>> 1a85e838937147e3e20188ce399ab469ec0cb674
     </div>
   );
 }
