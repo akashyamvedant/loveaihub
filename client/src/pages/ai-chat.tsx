@@ -387,11 +387,15 @@ export default function AiChat() {
     } animate-in fade-in-0 slide-in-from-bottom-4 duration-500`} style={{ animationDelay: `${index * 100}ms` }}>
       {/* Avatar */}
       <div className="flex-shrink-0">
-        <Avatar className={`w-8 h-8 ${message.role === "assistant" ? "ring-2 ring-purple-500/50" : ""}`}>
+        <Avatar className={`w-10 h-10 transition-all duration-300 ${
+          message.role === "assistant"
+            ? "ring-2 ring-purple-500/50 shadow-lg shadow-purple-500/25 hover:ring-purple-400/70 hover:shadow-purple-400/30"
+            : "ring-2 ring-blue-500/50 shadow-lg shadow-blue-500/25 hover:ring-blue-400/70 hover:shadow-blue-400/30"
+        }`}>
           <AvatarFallback className={
-            message.role === "user" 
-              ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white" 
-              : "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+            message.role === "user"
+              ? "bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 text-white shadow-inner"
+              : "bg-gradient-to-br from-purple-500 via-pink-500 to-purple-600 text-white shadow-inner"
           }>
             {message.role === "user" ? (
               <User className="w-4 h-4" />
