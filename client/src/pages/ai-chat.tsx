@@ -993,6 +993,197 @@ export default function AiChat() {
     );
   }
 
+  // Chat History Sidebar Component
+  const ChatHistorySidebar = () => {
+    const [editingTitle, setEditingTitle] = useState<string | null>(null);
+    const [editTitle, setEditTitle] = useState("");
+
+    return (
+      <div className={`fixed left-0 top-0 h-full bg-gradient-to-b from-slate-900/95 to-slate-800/95 backdrop-blur-xl border-r border-slate-700/50 transition-all duration-300 z-40 ${
+        showConversations ? "w-80" : "w-0"
+      } overflow-hidden`}>
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className="p-4 border-b border-slate-700/50">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <History className="w-5 h-5 text-purple-400" />
+                <h2 className="font-semibold text-white">Chat History</h2>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowConversations(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                placeholder="Search conversations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-slate-800/50 border-slate-600 focus:border-purple-500"
+              />
+            </div>
+
+            {/* New Chat Button */}
+            <Button
+              onClick={startNewConversation}
+              className="w-full mt-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              New Chat
+            </Button>
+          </div>
+
+          {/* Conversations List */}
+          <ScrollArea className="flex-1 p-2">
+            <div className="space-y-1">
+              {filteredConversations.length === 0 ? (
+                <div className="text-center py-8 text-slate-400">
+                  <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No conversations found</p>
+                </div>
+              ) : (
+                filteredConversations.map((conversation) => (
+                  <div
+                    key={conversation.id}
+                    className={`group relative p-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-slate-800/50 ${
+                      currentConversationId === conversation.id
+                        ? "bg-purple-500/20 border border-purple-500/30"
+                        : "hover:bg-slate-700/30"
+                    }`}
+                    onClick={() => loadConversation(conversation.id)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          {conversation.pinned && (
+                            <Pin className="w-3 h-3 text-yellow-400 flex-shrink-0" />
+                          )}
+                          {editingTitle === conversation.id ? (
+                            <Input
+                              value={editTitle}
+                              onChange={(e) => setEditTitle(e.target.value)}
+                              onBlur={() => {
+                                renameConversation(conversation.id, editTitle);
+                                setEditingTitle(null);
+                              }}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  renameConversation(conversation.id, editTitle);
+                                  setEditingTitle(null);
+                                }
+                              }}
+                              className="text-sm bg-transparent border-0 p-0 h-auto focus-visible:ring-0"
+                              autoFocus
+                            />
+                          ) : (
+                            <h3
+                              className="font-medium text-sm text-slate-200 truncate"
+                              onDoubleClick={() => {
+                                setEditingTitle(conversation.id);
+                                setEditTitle(conversation.title);
+                              }}
+                            >
+                              {conversation.title}
+                            </h3>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 text-xs text-slate-400">
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {conversation.lastActivity.toLocaleDateString()}
+                          </span>
+                          <span>•</span>
+                          <span>{conversation.messages.length} messages</span>
+                        </div>
+
+                        {/* Model Badge */}
+                        <div className="mt-2">
+                          <Badge variant="outline" className="text-xs">
+                            {chatModels.find(m => m.id === conversation.model)?.icon} {chatModels.find(m => m.id === conversation.model)?.name || 'Unknown Model'}
+                          </Badge>
+                        </div>
+
+                        {/* Last Message Preview */}
+                        {conversation.messages.length > 0 && (
+                          <p className="text-xs text-slate-500 mt-2 line-clamp-2">
+                            {conversation.messages[conversation.messages.length - 1]?.content.slice(0, 100)}...
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex flex-col gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  togglePinConversation(conversation.id);
+                                }}
+                              >
+                                <Pin className={`w-3 h-3 ${conversation.pinned ? 'text-yellow-400' : 'text-slate-400'}`} />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {conversation.pinned ? 'Unpin' : 'Pin'} conversation
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 text-red-400 hover:text-red-300"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteConversation(conversation.id);
+                                }}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Delete conversation</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </ScrollArea>
+
+          {/* Footer */}
+          <div className="p-4 border-t border-slate-700/50">
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span>{conversations.length} conversations</span>
+              <Button variant="ghost" size="sm" className="text-xs h-6">
+                <Archive className="w-3 h-3 mr-1" />
+                Manage
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const MessageBubble = ({ message, index }: { message: Message; index: number }) => (
     <div className={`group flex gap-4 p-6 hover:bg-slate-800/30 transition-all duration-300 hover:scale-[1.01] ${
       message.role === "user" ? "bg-slate-800/10" : ""
