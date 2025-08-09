@@ -40,10 +40,10 @@ export function BackButton({
   );
 }
 
-export function FloatingBackButton({ 
-  label = "Dashboard", 
+export function FloatingBackButton({
+  label = "Dashboard",
   destination = "/",
-  className = "" 
+  className = ""
 }: BackButtonProps) {
   const [, setLocation] = useLocation();
 
@@ -52,16 +52,11 @@ export function FloatingBackButton({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.4, type: "spring" }}
-      className={`fixed top-6 left-6 z-50 ${className}`}
-    >
+    <div className={`fixed top-6 left-6 z-50 animate-in fade-in-0 zoom-in-90 duration-500 ${className}`}>
       <div className="relative group">
         {/* Glow effect */}
         <div className="absolute -inset-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-        
+
         {/* Main button */}
         <Button
           variant="ghost"
@@ -70,7 +65,7 @@ export function FloatingBackButton({
         >
           <ArrowLeft className="w-5 h-5 text-slate-300 group-hover:text-purple-300 transition-all duration-200 group-hover:-translate-x-0.5" />
         </Button>
-        
+
         {/* Tooltip */}
         <div className="absolute left-16 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 delay-150 pointer-events-none">
           <div className="bg-slate-800/95 backdrop-blur-sm text-white text-sm px-3 py-2 rounded-lg border border-slate-600/50 shadow-lg whitespace-nowrap">
@@ -79,7 +74,7 @@ export function FloatingBackButton({
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
