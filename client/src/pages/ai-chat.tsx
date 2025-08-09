@@ -1326,9 +1326,11 @@ export default function AiChat() {
   );
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white transition-all duration-300 ${
+    <div className={`flex min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white transition-all duration-300 ${
       isFullscreen ? "fixed inset-0 z-50" : ""
     }`}>
+      {!isFullscreen && <AppSidebar defaultCollapsed={true} />}
+      <div className="flex-1 overflow-hidden">
       {/* Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl animate-pulse"></div>
@@ -1749,6 +1751,7 @@ export default function AiChat() {
                 </div>
               </div>
             </div>
+          </div>
           </div>
         </div>
       </div>
