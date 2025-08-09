@@ -65,66 +65,528 @@ import {
 } from "lucide-react";
 
 const chatModels = [
-  { 
-    id: "provider-6/gpt-4.1-mini", 
-    name: "GPT-4.1 Mini", 
+  // === GPT-5 Series (Latest) ===
+  {
+    id: "provider-3/gpt-5",
+    name: "GPT-5",
+    provider: "OpenAI",
+    category: "Next-Gen",
+    description: "The most advanced GPT model with unprecedented capabilities",
+    capabilities: ["Next-gen reasoning", "Advanced multimodal", "Creative excellence"],
+    icon: "⭐",
+    color: "bg-yellow-500",
+    tier: "premium"
+  },
+  {
+    id: "provider-3/gpt-5-chat",
+    name: "GPT-5 Chat",
+    provider: "OpenAI",
+    category: "Next-Gen",
+    description: "GPT-5 optimized for conversational interactions",
+    capabilities: ["Advanced dialogue", "Context awareness", "Personality"],
+    icon: "💫",
+    color: "bg-yellow-500",
+    tier: "premium"
+  },
+  {
+    id: "provider-3/gpt-5-mini",
+    name: "GPT-5 Mini",
+    provider: "OpenAI",
+    category: "Fast",
+    description: "Lightweight GPT-5 for quick responses",
+    capabilities: ["Ultra-fast", "Efficient", "GPT-5 quality"],
+    icon: "⚡",
+    color: "bg-yellow-400",
+    tier: "standard"
+  },
+  {
+    id: "provider-3/gpt-5-nano",
+    name: "GPT-5 Nano",
+    provider: "OpenAI",
+    category: "Ultra-Fast",
+    description: "Smallest GPT-5 variant for instant responses",
+    capabilities: ["Instant responses", "Minimal latency", "Basic tasks"],
+    icon: "🚀",
+    color: "bg-yellow-300",
+    tier: "free"
+  },
+
+  // === O-Series (Reasoning) ===
+  {
+    id: "provider-2/o3",
+    name: "O3",
+    provider: "OpenAI",
+    category: "Reasoning",
+    description: "Advanced reasoning model for complex problems",
+    capabilities: ["Deep reasoning", "Problem solving", "Mathematical thinking"],
+    icon: "🎯",
+    color: "bg-emerald-500",
+    tier: "premium"
+  },
+  {
+    id: "provider-6/o3-medium",
+    name: "O3 Medium",
+    provider: "OpenAI",
+    category: "Reasoning",
+    description: "Balanced reasoning model",
+    capabilities: ["Moderate reasoning", "Good performance", "Versatile"],
+    icon: "🎯",
+    color: "bg-emerald-400",
+    tier: "standard"
+  },
+  {
+    id: "provider-6/o3-pro",
+    name: "O3 Pro",
+    provider: "OpenAI",
+    category: "Reasoning",
+    description: "Professional-grade reasoning capabilities",
+    capabilities: ["Professional reasoning", "Complex analysis", "High accuracy"],
+    icon: "🎯",
+    color: "bg-emerald-600",
+    tier: "premium"
+  },
+  {
+    id: "provider-3/o3-mini",
+    name: "O3 Mini",
+    provider: "OpenAI",
+    category: "Reasoning",
+    description: "Compact reasoning model",
+    capabilities: ["Basic reasoning", "Fast responses", "Efficient"],
+    icon: "🎯",
+    color: "bg-emerald-300",
+    tier: "free"
+  },
+  {
+    id: "provider-2/o4-mini",
+    name: "O4 Mini",
+    provider: "OpenAI",
+    category: "Next-Gen Reasoning",
+    description: "Next generation compact reasoning model",
+    capabilities: ["Advanced reasoning", "Compact size", "Future tech"],
+    icon: "🎯",
+    color: "bg-teal-500",
+    tier: "premium"
+  },
+
+  // === GPT-4.1 Series ===
+  {
+    id: "provider-6/gpt-4.1",
+    name: "GPT-4.1",
+    provider: "OpenAI",
+    category: "Advanced",
+    description: "Most capable GPT-4 variant for complex tasks",
+    capabilities: ["Advanced reasoning", "Complex analysis", "Creative writing"],
+    icon: "🧠",
+    color: "bg-blue-500",
+    tier: "premium"
+  },
+  {
+    id: "provider-6/gpt-4.1-mini",
+    name: "GPT-4.1 Mini",
     provider: "OpenAI",
     category: "Fast",
     description: "Quick responses for everyday tasks",
     capabilities: ["Fast responses", "General knowledge", "Code assistance"],
     icon: "🚀",
-    color: "bg-blue-500"
+    color: "bg-blue-400",
+    tier: "standard"
   },
-  { 
-    id: "provider-6/gpt-4.1", 
-    name: "GPT-4.1", 
+  {
+    id: "provider-6/gpt-4.1-nano",
+    name: "GPT-4.1 Nano",
     provider: "OpenAI",
-    category: "Advanced",
-    description: "Most capable model for complex reasoning",
-    capabilities: ["Advanced reasoning", "Complex analysis", "Creative writing"],
-    icon: "🧠",
-    color: "bg-purple-500"
+    category: "Ultra-Fast",
+    description: "Ultra-compact GPT-4.1 for instant responses",
+    capabilities: ["Instant responses", "Minimal resources", "Basic tasks"],
+    icon: "⚡",
+    color: "bg-blue-300",
+    tier: "free"
   },
-  { 
-    id: "provider-6/claude-sonnet-4-20250514", 
-    name: "Claude Sonnet 4", 
-    provider: "Anthropic",
-    category: "Balanced",
-    description: "Excellent for analysis and thoughtful responses",
-    capabilities: ["Thoughtful analysis", "Safety focused", "Long conversations"],
-    icon: "🎭",
-    color: "bg-orange-500"
+  {
+    id: "provider-3/gpt-4.5-preview",
+    name: "GPT-4.5 Preview",
+    provider: "OpenAI",
+    category: "Preview",
+    description: "Preview of next-generation GPT capabilities",
+    capabilities: ["Cutting-edge features", "Experimental", "Future preview"],
+    icon: "🔮",
+    color: "bg-indigo-500",
+    tier: "premium"
   },
-  { 
-    id: "provider-6/gpt-4o-search-preview", 
-    name: "GPT-4o Search", 
+
+  // === GPT-4o Series (Search & Vision) ===
+  {
+    id: "provider-6/gpt-4o-search-preview",
+    name: "GPT-4o Search",
     provider: "OpenAI",
     category: "Search",
     description: "Real-time web search and current information",
     capabilities: ["Web search", "Current events", "Real-time data"],
     icon: "🔍",
-    color: "bg-green-500"
+    color: "bg-green-500",
+    tier: "premium"
   },
-  { 
-    id: "provider-6/gemini-2.5-pro-preview-05-06", 
-    name: "Gemini 2.5 Pro", 
+  {
+    id: "provider-6/gpt-4o-mini-search-preview",
+    name: "GPT-4o Mini Search",
+    provider: "OpenAI",
+    category: "Search",
+    description: "Compact search-enabled model",
+    capabilities: ["Web search", "Fast responses", "Current info"],
+    icon: "🔍",
+    color: "bg-green-400",
+    tier: "standard"
+  },
+
+  // === Claude Series ===
+  {
+    id: "provider-6/claude-sonnet-4-20250514",
+    name: "Claude Sonnet 4",
+    provider: "Anthropic",
+    category: "Balanced",
+    description: "Latest Claude with excellent reasoning and safety",
+    capabilities: ["Thoughtful analysis", "Safety focused", "Long conversations"],
+    icon: "🎭",
+    color: "bg-orange-500",
+    tier: "premium"
+  },
+  {
+    id: "provider-6/claude-sonnet-4-20250514-thinking",
+    name: "Claude Sonnet 4 Thinking",
+    provider: "Anthropic",
+    category: "Reasoning",
+    description: "Claude with visible thinking process",
+    capabilities: ["Transparent reasoning", "Step-by-step thinking", "Detailed analysis"],
+    icon: "🧠",
+    color: "bg-orange-600",
+    tier: "premium"
+  },
+
+  // === Gemini Series ===
+  {
+    id: "provider-6/gemini-2.5-pro-preview-05-06",
+    name: "Gemini 2.5 Pro",
     provider: "Google",
     category: "Multimodal",
-    description: "Advanced multimodal understanding",
-    capabilities: ["Vision", "Multimodal", "Large context"],
+    description: "Advanced multimodal understanding with 2M context",
+    capabilities: ["Vision", "Multimodal", "Large context", "Code understanding"],
     icon: "💎",
-    color: "bg-cyan-500"
+    color: "bg-cyan-500",
+    tier: "premium"
   },
-  { 
-    id: "provider-2/deepseek-r1-0528", 
-    name: "DeepSeek R1", 
+  {
+    id: "provider-1/gemini-2.5-pro",
+    name: "Gemini 2.5 Pro",
+    provider: "Google",
+    category: "Multimodal",
+    description: "Google's flagship multimodal AI model",
+    capabilities: ["Multimodal AI", "Code generation", "Creative tasks"],
+    icon: "💎",
+    color: "bg-cyan-400",
+    tier: "premium"
+  },
+
+  // === LLaMA Series ===
+  {
+    id: "provider-2/llama-4-maverick",
+    name: "LLaMA 4 Maverick",
+    provider: "Meta",
+    category: "Open Source",
+    description: "Latest LLaMA with maverick capabilities",
+    capabilities: ["Open source", "High performance", "Versatile"],
+    icon: "🦙",
+    color: "bg-purple-500",
+    tier: "standard"
+  },
+  {
+    id: "provider-2/llama-4-scout",
+    name: "LLaMA 4 Scout",
+    provider: "Meta",
+    category: "Exploration",
+    description: "LLaMA optimized for exploration and discovery",
+    capabilities: ["Exploration", "Discovery", "Research"],
+    icon: "🔍",
+    color: "bg-purple-400",
+    tier: "standard"
+  },
+  {
+    id: "provider-1/llama-3.3-70B-instruct-turbo",
+    name: "LLaMA 3.3 70B Turbo",
+    provider: "Meta",
+    category: "High Performance",
+    description: "Turbo-charged LLaMA for fast, high-quality responses",
+    capabilities: ["High performance", "Fast inference", "Quality responses"],
+    icon: "🦙",
+    color: "bg-purple-600",
+    tier: "standard"
+  },
+  {
+    id: "provider-1/llama-3.1-405b-instruct-turbo",
+    name: "LLaMA 3.1 405B Turbo",
+    provider: "Meta",
+    category: "Ultra Large",
+    description: "Massive LLaMA model with exceptional capabilities",
+    capabilities: ["Massive scale", "Exceptional quality", "Complex reasoning"],
+    icon: "🦙",
+    color: "bg-purple-700",
+    tier: "premium"
+  },
+
+  // === DeepSeek Series ===
+  {
+    id: "provider-2/deepseek-r1-0528",
+    name: "DeepSeek R1",
     provider: "DeepSeek",
     category: "Reasoning",
-    description: "Strong mathematical and logical reasoning",
+    description: "Advanced reasoning model with strong analytical capabilities",
     capabilities: ["Mathematical reasoning", "Code generation", "Problem solving"],
     icon: "🤖",
-    color: "bg-indigo-500"
+    color: "bg-indigo-500",
+    tier: "premium"
   },
+  {
+    id: "provider-1/deepseek-r1-0528",
+    name: "DeepSeek R1 Alt",
+    provider: "DeepSeek",
+    category: "Reasoning",
+    description: "Alternative DeepSeek R1 deployment",
+    capabilities: ["Mathematical reasoning", "Logic", "Analysis"],
+    icon: "🤖",
+    color: "bg-indigo-400",
+    tier: "premium"
+  },
+  {
+    id: "provider-6/deepseek-r1-uncensored",
+    name: "DeepSeek R1 Uncensored",
+    provider: "DeepSeek",
+    category: "Uncensored",
+    description: "DeepSeek R1 with reduced content filtering",
+    capabilities: ["Uncensored", "Raw responses", "Unfiltered"],
+    icon: "🔓",
+    color: "bg-red-500",
+    tier: "premium"
+  },
+  {
+    id: "provider-3/deepseek-v3",
+    name: "DeepSeek V3",
+    provider: "DeepSeek",
+    category: "Latest",
+    description: "Latest DeepSeek model with enhanced capabilities",
+    capabilities: ["Enhanced performance", "Improved reasoning", "Better quality"],
+    icon: "🤖",
+    color: "bg-indigo-600",
+    tier: "premium"
+  },
+
+  // === Mistral Series ===
+  {
+    id: "provider-2/mistral-large",
+    name: "Mistral Large",
+    provider: "Mistral AI",
+    category: "Large Model",
+    description: "Mistral's flagship large language model",
+    capabilities: ["Large scale", "High quality", "Multilingual"],
+    icon: "🌪️",
+    color: "bg-red-500",
+    tier: "premium"
+  },
+  {
+    id: "provider-2/mistral-small",
+    name: "Mistral Small",
+    provider: "Mistral AI",
+    category: "Efficient",
+    description: "Compact Mistral model for efficient processing",
+    capabilities: ["Efficient", "Fast responses", "Good quality"],
+    icon: "🌪️",
+    color: "bg-red-400",
+    tier: "standard"
+  },
+  {
+    id: "provider-2/mistral-saba",
+    name: "Mistral Saba",
+    provider: "Mistral AI",
+    category: "Specialized",
+    description: "Specialized Mistral variant",
+    capabilities: ["Specialized tasks", "Optimized performance", "Focused"],
+    icon: "🌪️",
+    color: "bg-red-600",
+    tier: "premium"
+  },
+
+  // === Qwen Series ===
+  {
+    id: "provider-3/qwen-3-235B-a22b-2507",
+    name: "Qwen 3 235B",
+    provider: "Alibaba",
+    category: "Large Scale",
+    description: "Massive Qwen model with 235B parameters",
+    capabilities: ["Massive scale", "Multilingual", "High performance"],
+    icon: "🈶",
+    color: "bg-amber-500",
+    tier: "premium"
+  },
+  {
+    id: "provider-6/qwen3-coder-480b-a35b",
+    name: "Qwen 3 Coder 480B",
+    provider: "Alibaba",
+    category: "Coding",
+    description: "Ultra-large Qwen specialized for coding",
+    capabilities: ["Code generation", "Programming", "Software development"],
+    icon: "💻",
+    color: "bg-amber-600",
+    tier: "premium"
+  },
+  {
+    id: "provider-3/qwen-2.5-coder-32b",
+    name: "Qwen 2.5 Coder 32B",
+    provider: "Alibaba",
+    category: "Coding",
+    description: "Qwen optimized for programming tasks",
+    capabilities: ["Code assistance", "Programming help", "Development"],
+    icon: "💻",
+    color: "bg-amber-400",
+    tier: "standard"
+  },
+  {
+    id: "provider-2/qwq-32b",
+    name: "QwQ 32B",
+    provider: "Alibaba",
+    category: "Reasoning",
+    description: "Qwen variant focused on questioning and reasoning",
+    capabilities: ["Question answering", "Reasoning", "Analysis"],
+    icon: "❓",
+    color: "bg-amber-300",
+    tier: "standard"
+  },
+
+  // === Specialized Models ===
+  {
+    id: "provider-2/codestral",
+    name: "Codestral",
+    provider: "Mistral AI",
+    category: "Coding",
+    description: "Mistral's specialized coding model",
+    capabilities: ["Code generation", "Programming", "Debug assistance"],
+    icon: "💻",
+    color: "bg-violet-500",
+    tier: "standard"
+  },
+  {
+    id: "provider-2/pixtral-large",
+    name: "Pixtral Large",
+    provider: "Mistral AI",
+    category: "Vision",
+    description: "Large vision-language model from Mistral",
+    capabilities: ["Vision understanding", "Image analysis", "Multimodal"],
+    icon: "👁️",
+    color: "bg-pink-500",
+    tier: "premium"
+  },
+  {
+    id: "provider-3/pixtral-12b-2409",
+    name: "Pixtral 12B",
+    provider: "Mistral AI",
+    category: "Vision",
+    description: "Compact vision model for image understanding",
+    capabilities: ["Image understanding", "Visual Q&A", "Compact"],
+    icon: "👁️",
+    color: "bg-pink-400",
+    tier: "standard"
+  },
+
+  // === Chinese Models ===
+  {
+    id: "provider-6/kimi-k2",
+    name: "Kimi K2",
+    provider: "Moonshot AI",
+    category: "Chinese",
+    description: "Advanced Chinese language model",
+    capabilities: ["Chinese language", "Cultural context", "Local knowledge"],
+    icon: "🀄",
+    color: "bg-rose-500",
+    tier: "premium"
+  },
+  {
+    id: "provider-6/minimax-m1-40k",
+    name: "MiniMax M1 40K",
+    provider: "MiniMax",
+    category: "Long Context",
+    description: "Model with 40K context window",
+    capabilities: ["Long context", "Document analysis", "Extended memory"],
+    icon: "📄",
+    color: "bg-sky-500",
+    tier: "premium"
+  },
+  {
+    id: "provider-6/minimax-text-01",
+    name: "MiniMax Text 01",
+    provider: "MiniMax",
+    category: "Text",
+    description: "Specialized text processing model",
+    capabilities: ["Text processing", "Language tasks", "Writing"],
+    icon: "📝",
+    color: "bg-sky-400",
+    tier: "standard"
+  },
+
+  // === Search & Reasoning Specialized ===
+  {
+    id: "provider-1/sonar",
+    name: "Sonar",
+    provider: "Perplexity",
+    category: "Search",
+    description: "Advanced search and research capabilities",
+    capabilities: ["Web search", "Research", "Information gathering"],
+    icon: "🔍",
+    color: "bg-green-600",
+    tier: "premium"
+  },
+  {
+    id: "provider-1/sonar-pro",
+    name: "Sonar Pro",
+    provider: "Perplexity",
+    category: "Search Pro",
+    description: "Professional-grade search and analysis",
+    capabilities: ["Advanced search", "Professional research", "Deep analysis"],
+    icon: "🔍",
+    color: "bg-green-700",
+    tier: "premium"
+  },
+  {
+    id: "provider-1/sonar-reasoning",
+    name: "Sonar Reasoning",
+    provider: "Perplexity",
+    category: "Search + Reasoning",
+    description: "Search combined with advanced reasoning",
+    capabilities: ["Search + reasoning", "Complex analysis", "Multi-step thinking"],
+    icon: "🧠",
+    color: "bg-green-800",
+    tier: "premium"
+  },
+
+  // === Experimental & Cutting Edge ===
+  {
+    id: "provider-3/grok-4-0709",
+    name: "Grok 4",
+    provider: "xAI",
+    category: "Experimental",
+    description: "Cutting-edge AI with unique personality",
+    capabilities: ["Unique personality", "Experimental features", "Creative responses"],
+    icon: "🚀",
+    color: "bg-gray-500",
+    tier: "premium"
+  },
+  {
+    id: "provider-6/r1-1776",
+    name: "R1-1776",
+    provider: "Unknown",
+    category: "Experimental",
+    description: "Experimental reasoning model",
+    capabilities: ["Experimental", "Advanced reasoning", "Cutting-edge"],
+    icon: "⚗️",
+    color: "bg-slate-500",
+    tier: "premium"
+  }
 ];
 
 interface Message {
