@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import Navigation from "@/components/navigation";
+import { BackButton } from "@/components/ui/back-button";
 import Footer from "@/components/footer";
 import { 
   Code, 
