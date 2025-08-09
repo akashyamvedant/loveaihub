@@ -20,11 +20,11 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/footer";
-import { 
-  MessageSquare, 
-  Send, 
-  Bot, 
-  User, 
+import {
+  MessageSquare,
+  Send,
+  Bot,
+  User,
   Loader2,
   Copy,
   Trash2,
@@ -61,7 +61,16 @@ import {
   Star,
   MessageCircle,
   Maximize2,
-  Minimize2
+  Minimize2,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  Archive,
+  Pin,
+  Filter,
+  SortDesc,
+  Eye,
+  EyeOff
 } from "lucide-react";
 
 const chatModels = [
@@ -397,7 +406,7 @@ const chatModels = [
     category: "Efficient",
     description: "Compact Mistral model for efficient processing",
     capabilities: ["Efficient", "Fast responses", "Good quality"],
-    icon: "🌪️",
+    icon: "���️",
     color: "bg-red-400",
     tier: "standard"
   },
