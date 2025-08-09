@@ -9,11 +9,11 @@ interface BackButtonProps {
   showIcon?: boolean;
 }
 
-export function BackButton({ 
-  label = "Back to Dashboard", 
-  destination = "/", 
+export function BackButton({
+  label = "Back to Dashboard",
+  destination = "/",
   className = "",
-  showIcon = true 
+  showIcon = true
 }: BackButtonProps) {
   const [, setLocation] = useLocation();
 
@@ -22,37 +22,21 @@ export function BackButton({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.3 }}
-      className={`fixed top-6 left-6 z-50 ${className}`}
-    >
+    <div className={`fixed top-6 left-6 z-50 animate-in fade-in-0 slide-in-from-left-4 duration-300 ${className}`}>
       <Button
         variant="ghost"
         onClick={handleBack}
-        className="group bg-gradient-to-r from-slate-800/80 to-slate-700/80 backdrop-blur-xl border border-slate-600/50 hover:border-purple-500/50 text-white hover:text-white shadow-lg hover:shadow-purple-500/20 transition-all duration-300 hover:scale-105"
+        className="group bg-gradient-to-r from-slate-800/90 to-slate-700/90 backdrop-blur-xl border border-slate-600/50 hover:border-purple-500/50 text-white hover:text-white shadow-lg hover:shadow-purple-500/20 transition-all duration-300 hover:scale-105"
       >
         <div className="flex items-center gap-3">
           {showIcon && (
-            <div className="relative">
-              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-              <motion.div
-                className="absolute inset-0"
-                initial={{ scale: 0 }}
-                animate={{ scale: 0 }}
-                whileHover={{ scale: 1 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Home className="w-4 h-4 text-purple-400" />
-              </motion.div>
-            </div>
+            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
           )}
           <span className="font-medium">{label}</span>
           <div className="w-1 h-1 bg-purple-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
         </div>
       </Button>
-    </motion.div>
+    </div>
   );
 }
 
