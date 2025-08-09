@@ -78,10 +78,10 @@ export function FloatingBackButton({
   );
 }
 
-export function MinimalBackButton({ 
-  label = "Back", 
+export function MinimalBackButton({
+  label = "Back",
   destination = "/",
-  className = "" 
+  className = ""
 }: BackButtonProps) {
   const [, setLocation] = useLocation();
 
@@ -90,12 +90,7 @@ export function MinimalBackButton({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className={`mb-6 ${className}`}
-    >
+    <div className={`mb-6 animate-in fade-in-0 slide-in-from-top-2 duration-300 ${className}`}>
       <Button
         variant="ghost"
         onClick={handleBack}
@@ -104,7 +99,7 @@ export function MinimalBackButton({
         <ArrowLeft className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" />
         {label}
       </Button>
-    </motion.div>
+    </div>
   );
 }
 
