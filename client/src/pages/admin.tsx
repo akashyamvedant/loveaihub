@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import Navigation from "@/components/navigation";
+import { BackButton } from "@/components/ui/back-button";
 import Footer from "@/components/footer";
 import { 
   Shield, 
