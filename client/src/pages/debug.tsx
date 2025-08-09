@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/ui/back-button";
+import { AppSidebar } from "@/components/ui/app-sidebar";
 
 export default function Debug() {
   const [testResults, setTestResults] = useState<any[]>([]);
@@ -120,7 +121,9 @@ export default function Debug() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
+      <AppSidebar defaultCollapsed={true} />
+      <div className="flex-1 overflow-y-auto">
       <BackButton />
 
       <div className="pt-12 pb-12">
@@ -215,6 +218,7 @@ export default function Debug() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
