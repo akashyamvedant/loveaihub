@@ -1649,7 +1649,6 @@ export default function ImageGeneration() {
           </div>
         </div>
 
-        <Footer />
       </div>
     </TooltipProvider>
   );
