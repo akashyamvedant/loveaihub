@@ -91,11 +91,11 @@ export class A4FApiService {
   async enhancePrompt(prompt: string): Promise<string> {
     try {
       const response = await this.makeRequest("/chat/completions", {
-        model: "provider-3/gpt-4o",
+        model: "provider-3/gpt-5",
         messages: [
           {
             role: "system",
-            content: "You are a professional AI prompt engineer. Enhance the given prompt to be more detailed, specific, and optimized for image generation. Keep the core idea but add artistic details, style specifications, and technical parameters that will result in better AI-generated images."
+            content: "You are a professional AI prompt engineer. Enhance the given prompt to be more detailed, specific, and optimized for image generation. Keep the core idea but add artistic details, style specifications, and technical parameters that will result in better AI-generated images. Return only the enhanced prompt without any additional text or explanations."
           },
           {
             role: "user",
@@ -103,10 +103,10 @@ export class A4FApiService {
           }
         ],
         temperature: 0.7,
-        max_tokens: 200
+        max_tokens: 300
       });
 
-      return response.choices[0].message.content;
+      return response.choices[0].message.content.trim();
     } catch (error) {
       console.error("Error enhancing prompt:", error);
       return prompt; // Return original prompt if enhancement fails

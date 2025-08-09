@@ -109,6 +109,7 @@ export const insertGenerationSchema = createInsertSchema(generations).pick({
   model: true,
   prompt: true,
   metadata: true,
+  result: true,
 });
 
 export const insertBlogPostSchema = createInsertSchema(blogPosts).pick({

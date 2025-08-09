@@ -226,7 +226,7 @@ export default function VideoGeneration() {
     },
   });
 
-  const { data: generations, isLoading: generationsLoading } = useQuery({
+  const { data: generations, isLoading: generationsLoading } = useQuery<any[]>({
     queryKey: ["/api/generations"],
     enabled: isAuthenticated,
   });
@@ -329,6 +329,14 @@ export default function VideoGeneration() {
       
       <div className="pt-20 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Back Button */}
+          <Button variant="ghost" className="mb-6">
+            <a href="/" className="flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
+            </a>
+          </Button>
+
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-4xl font-bold mb-4">

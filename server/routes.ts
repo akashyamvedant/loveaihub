@@ -128,13 +128,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Request body:", JSON.stringify(req.body, null, 2));
 
       const userId = req.currentUser.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
 
-      // TEMPORARY: Bypass database operations due to connectivity issues
-      console.log("BYPASSING DATABASE - using temporary config");
-
-      // Skip database user lookup and limit checks for now
-      console.log("Skipping user database lookup and limit checks temporarily");
-      console.log("Routes.ts image generation - NO DATABASE CALLS FROM HERE");
+      // Check generation limits for free users
+      if (user.subscriptionType === "free" && (user.generationsUsed || 0) >= (user.generationsLimit || 10)) {
+        return res.status(403).json({ 
+          message: "Generation limit reached", 
+          generationsUsed: user.generationsUsed || 0,
+          generationsLimit: user.generationsLimit || 10
+        });
+      }
 
       const { model, prompt, enhancePrompt = false, n = 1, size = "1024x1024", quality = "standard", style = "vivid" } = req.body;
 
@@ -144,50 +151,171 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("Generation parameters:", { model, prompt, enhancePrompt, n, size, quality, style });
 
-      // TEMPORARY: Skip prompt enhancement to isolate the API issue
+      // Enhance prompt if requested using provider-3/gpt-5
       let finalPrompt = prompt;
-      console.log("Skipping prompt enhancement temporarily - using original prompt");
-
-      try {
-        // Generate image using A4F API (bypassing database operations)
-        console.log("Calling A4F API for image generation...");
-        const result = await a4fApi.generateImage({
-          model,
-          prompt: finalPrompt,
-          n,
-          size,
-          quality,
-          style,
-        });
-
-        console.log("A4F API result:", JSON.stringify(result, null, 2));
-
-        // Create temporary generation response without database storage
-        const generation = {
-          id: `temp-${Date.now()}`,
-          userId,
-          type: "image",
-          model,
-          prompt: finalPrompt,
-          metadata: { originalPrompt: prompt, enhanced: enhancePrompt, n, size, quality, style },
-          status: "completed",
-          result,
-          createdAt: new Date(),
-        };
-
-        console.log("Sending success response (temporary mode - no database storage)");
-        res.json({ generation });
-      } catch (error) {
-        console.error("A4F API error:", error);
-        res.status(500).json({
-          message: error instanceof Error ? error.message : "Failed to generate image",
-        });
+      if (enhancePrompt) {
+        try {
+          console.log("Enhancing prompt with provider-3/gpt-5...");
+          finalPrompt = await a4fApi.enhancePrompt(prompt);
+          console.log("Enhanced prompt:", finalPrompt);
+        } catch (error) {
+          console.warn("Prompt enhancement failed, using original prompt:", error);
+          finalPrompt = prompt;
+        }
       }
+
+      // Generate image using A4F API
+      console.log("Calling A4F API for image generation...");
+      const result = await a4fApi.generateImage({
+        model,
+        prompt: finalPrompt,
+        n,
+        size,
+        quality,
+        style,
+      });
+
+      console.log("A4F API result:", JSON.stringify(result, null, 2));
+
+      // Create generation record in database
+      const generation = await storage.createGeneration({
+        userId,
+        type: "image",
+        model,
+        prompt: finalPrompt,
+        metadata: { 
+          originalPrompt: prompt, 
+          enhanced: enhancePrompt, 
+          enhancedPrompt: finalPrompt !== prompt ? finalPrompt : undefined,
+          n, 
+          size, 
+          quality, 
+          style 
+        },
+        result,
+      });
+
+      // Download and store images locally (since A4F images are single-use)
+      if (result.data && result.data.length > 0) {
+        try {
+          console.log("Processing and storing images locally...");
+          await imageStorageService.processGenerationImages(generation);
+          console.log("Images stored successfully");
+        } catch (error) {
+          console.error("Error storing images:", error);
+          // Continue even if image storage fails
+        }
+      }
+
+      // Update user's generation count
+      await storage.updateUserGenerationsUsed(userId, (user.generationsUsed || 0) + 1);
+
+      console.log("Image generation completed successfully");
+      res.json({ generation });
     } catch (error) {
       console.error("Error generating image:", error);
       res.status(500).json({
         message: error instanceof Error ? error.message : "Failed to generate image"
       });
+    }
+  });
+
+  // Image Action Routes
+  app.get("/api/images/:filename", async (req, res) => {
+    try {
+      const { filename } = req.params;
+      const imageBuffer = await imageStorageService.getStoredImage(filename);
+      
+      if (!imageBuffer) {
+        return res.status(404).json({ message: "Image not found" });
+      }
+
+      // Set appropriate headers
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+      res.send(imageBuffer);
+    } catch (error) {
+      console.error("Error serving image:", error);
+      res.status(500).json({ message: "Failed to serve image" });
+    }
+  });
+
+  app.post("/api/generations/:id/favorite", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.currentUser.id;
+      
+      // Get the generation to verify ownership
+      const generations = await storage.getGenerationsByUser(userId);
+      const generation = generations.find(g => g.id === id);
+      
+      if (!generation) {
+        return res.status(404).json({ message: "Generation not found" });
+      }
+
+      // Toggle favorite status in metadata
+      const currentMetadata = generation.metadata as any || {};
+      const isFavorited = !currentMetadata.favorited;
+      
+      await storage.updateGeneration(id, {
+        metadata: {
+          ...currentMetadata,
+          favorited: isFavorited,
+          favoritedAt: isFavorited ? new Date().toISOString() : undefined
+        }
+      });
+
+      res.json({ success: true, favorited: isFavorited });
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      res.status(500).json({ message: "Failed to toggle favorite" });
+    }
+  });
+
+  app.delete("/api/generations/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.currentUser.id;
+      
+      // Get the generation to verify ownership
+      const generations = await storage.getGenerationsByUser(userId);
+      const generation = generations.find(g => g.id === id);
+      
+      if (!generation) {
+        return res.status(404).json({ message: "Generation not found" });
+      }
+
+      // Mark as deleted instead of actually deleting (soft delete)
+      await storage.updateGeneration(id, {
+        metadata: {
+          ...(generation.metadata as any || {}),
+          deleted: true,
+          deletedAt: new Date().toISOString()
+        }
+      });
+
+      res.json({ success: true, message: "Generation deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting generation:", error);
+      res.status(500).json({ message: "Failed to delete generation" });
+    }
+  });
+
+  app.get("/api/generations", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.currentUser.id;
+      const allGenerations = await storage.getGenerationsByUser(userId);
+      
+      // Filter out soft-deleted generations
+      const activeGenerations = allGenerations.filter(g => {
+        const metadata = g.metadata as any || {};
+        return !metadata.deleted;
+      });
+
+      res.json(activeGenerations);
+    } catch (error) {
+      console.error("Error fetching generations:", error);
+      res.status(500).json({ message: "Failed to fetch generations" });
     }
   });
 

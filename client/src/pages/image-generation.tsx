@@ -52,7 +52,8 @@ import {
   SortDesc,
   RefreshCw,
   CloudDownload,
-  HeartIcon
+  HeartIcon,
+  ArrowLeft
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -874,6 +875,10 @@ export default function ImageGeneration() {
 
   const { data: generations, isLoading: generationsLoading } = useQuery({
     queryKey: ["/api/generations"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/generations");
+      return await response.json();
+    },
     enabled: isAuthenticated,
   });
 
@@ -939,19 +944,90 @@ export default function ImageGeneration() {
     }
   };
 
+  const favoriteImageMutation = useMutation({
+    mutationFn: async (generationId: string) => {
+      const response = await apiRequest("POST", `/api/generations/${generationId}/favorite`);
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: data.favorited ? "Added to Favorites" : "Removed from Favorites",
+        description: data.favorited ? "Image has been saved to your favorites." : "Image has been removed from your favorites.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update favorite status.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const deleteImageMutation = useMutation({
+    mutationFn: async (generationId: string) => {
+      const response = await apiRequest("DELETE", `/api/generations/${generationId}`);
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Image Deleted",
+        description: "Image has been removed from your gallery.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete image.",
+        variant: "destructive",
+      });
+    }
+  });
+
   const handleImageAction = (action: string, generation: any) => {
     switch (action) {
       case 'favorite':
-        toast({
-          title: "Added to Favorites",
-          description: "Image has been saved to your favorites.",
-        });
+        favoriteImageMutation.mutate(generation.id);
         break;
       case 'delete':
-        toast({
-          title: "Image Deleted",
-          description: "Image has been removed from your gallery.",
-        });
+        deleteImageMutation.mutate(generation.id);
+        break;
+      case 'download':
+        if (generation.result?.data?.[0]?.url) {
+          const link = document.createElement('a');
+          link.href = generation.result.data[0].url;
+          link.download = `generated-image-${generation.id}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          toast({
+            title: "Download Started",
+            description: "Your image is being downloaded.",
+          });
+        }
+        break;
+      case 'share':
+        if (generation.result?.data?.[0]?.url && navigator.share) {
+          navigator.share({
+            title: 'AI Generated Image',
+            text: generation.prompt,
+            url: generation.result.data[0].url
+          }).catch(() => {
+            navigator.clipboard.writeText(generation.result.data[0].url);
+            toast({
+              title: "Link Copied",
+              description: "Image link copied to clipboard.",
+            });
+          });
+        } else if (generation.result?.data?.[0]?.url) {
+          navigator.clipboard.writeText(generation.result.data[0].url);
+          toast({
+            title: "Link Copied",
+            description: "Image link copied to clipboard.",
+          });
+        }
         break;
       default:
         break;
@@ -968,7 +1044,7 @@ export default function ImageGeneration() {
     );
   }
 
-  const imageGenerations = generations?.filter((g: any) => g.type === "image") || [];
+  const imageGenerations = generations?.filter((g: any) => g.type === 'image' && g.status === 'completed') || [];
 
   return (
     <TooltipProvider>
@@ -977,6 +1053,14 @@ export default function ImageGeneration() {
         
         <div className="pt-20 pb-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Back Button */}
+            <Button variant="ghost" className="mb-6">
+              <a href="/" className="flex items-center gap-2">
+                <ArrowLeft className="w-4 h-4" />
+                Back to Dashboard
+              </a>
+            </Button>
+
             {/* Header */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
