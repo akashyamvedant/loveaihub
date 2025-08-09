@@ -8,11 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-<<<<<<< HEAD
-import { BackButton } from "@/components/ui/back-button";
-=======
-import Navigation from "@/components/navigation";
->>>>>>> 1a85e838937147e3e20188ce399ab469ec0cb674
 import Footer from "@/components/footer";
 import { 
   Code, 
@@ -166,17 +161,6 @@ export default function ApiDocs() {
   };
 
   return (
-<<<<<<< HEAD
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
-      <BackButton />
-
-      <div className="pt-12 pb-12">
-=======
-    <div className="min-h-screen bg-slate-900 text-white">
-      <Navigation />
-      
-      <div className="pt-20 pb-12">
->>>>>>> 1a85e838937147e3e20188ce399ab469ec0cb674
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="text-center mb-12">

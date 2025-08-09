@@ -9,20 +9,7 @@ import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
-import Home from "@/pages/home";
-import ImageGeneration from "@/pages/image-generation";
-import VideoGeneration from "@/pages/video-generation";
-import AiChat from "@/pages/ai-chat";
-import AudioSpeech from "@/pages/audio-speech";
-import ImageEditing from "@/pages/image-editing";
-import ApiDocs from "@/pages/api-docs";
-import Blog from "@/pages/blog";
-import Admin from "@/pages/admin";
-import Pricing from "@/pages/pricing";
-import ResetPassword from "@/pages/reset-password";
-import ResetPasswordSimple from "@/pages/reset-password-simple";
-import Dashboard from "@/pages/dashboard";
-import Debug from "@/pages/debug";
+import SimpleHome from "@/pages/simple-home";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -77,42 +64,7 @@ function Router() {
   
   return (
     <Switch>
-      {isLoading ? (
-        <Route path="*">
-          {() => (
-            <div className="min-h-screen bg-background flex items-center justify-center">
-              <div className="loading-shimmer w-32 h-32 rounded-xl"></div>
-            </div>
-          )}
-        </Route>
-      ) : hasAuth ? (
-        <>
-          <Route path="/" component={Home} />
-          <Route path="/home" component={Home} />
-          <Route path="/dashboard" component={Home} />
-          <Route path="/image-generation" component={ImageGeneration} />
-          <Route path="/video-generation" component={VideoGeneration} />
-          <Route path="/ai-chat" component={AiChat} />
-          <Route path="/audio-speech" component={AudioSpeech} />
-          <Route path="/image-editing" component={ImageEditing} />
-          <Route path="/api-docs" component={ApiDocs} />
-          <Route path="/admin" component={Admin} />
-          <Route path="/blog" component={Blog} />
-          <Route path="/pricing" component={Pricing} />
-          <Route path="/debug" component={Debug} />
-        </>
-      ) : (
-        <>
-          <Route path="/" component={Landing} />
-          <Route path="/blog" component={Blog} />
-          <Route path="/pricing" component={Pricing} />
-          <Route path="/reset-password" component={ResetPassword} />
-        </>
-      )}
-
-      {/* Dashboard route accessible regardless of immediate auth state */}
-      <Route path="/dashboard" component={Dashboard} />
-
+      <Route path="/" component={SimpleHome} />
       <Route component={NotFound} />
     </Switch>
   );
