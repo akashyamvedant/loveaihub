@@ -74,27 +74,28 @@ console.log("Starting LoveAIHub server...");
       throw err;
     });
 
-    // Setup Vite or static files
+    // Setup static file serving for client
     console.log("Setting up file serving...");
-    const isDevelopment = process.env.NODE_ENV === "development" || app.get("env") === "development";
-    console.log("Environment mode:", isDevelopment ? "development" : "production");
 
-    if (setupVite && isDevelopment) {
-      await setupVite(app, server);
-      console.log("✓ Vite setup complete");
-    } else if (serveStatic && !isDevelopment) {
-      serveStatic(app);
-      console.log("✓ Static files setup complete");
-    } else {
-      console.log("✓ Running in API-only mode");
-      // Add a simple catch-all route for the frontend
-      app.get('*', (req, res) => {
-        if (req.path.startsWith('/api')) {
-          return res.status(404).json({ message: 'API endpoint not found' });
-        }
-        res.send('<html><body><h1>LoveAIHub API Server</h1><p>Server is running in API-only mode. Frontend not available.</p></body></html>');
-      });
-    }
+    // Serve static files from client directory
+    const path = await import('path');
+    const clientDir = path.resolve(import.meta.dirname, '..', 'client');
+
+    console.log("Serving client files from:", clientDir);
+    app.use(express.default.static(clientDir));
+
+    // Serve the main React app for all non-API routes
+    app.get('*', (req, res) => {
+      if (req.path.startsWith('/api')) {
+        return res.status(404).json({ message: 'API endpoint not found' });
+      }
+
+      // Serve the React app
+      const indexPath = path.resolve(clientDir, 'index.html');
+      res.sendFile(indexPath);
+    });
+
+    console.log("✓ Static file serving setup complete");
 
     // Start server
     const port = parseInt(process.env.PORT || '5000', 10);
