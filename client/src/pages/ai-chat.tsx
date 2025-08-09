@@ -382,9 +382,9 @@ export default function AiChat() {
   }
 
   const MessageBubble = ({ message, index }: { message: Message; index: number }) => (
-    <div className={`group flex gap-4 p-4 hover:bg-slate-800/30 transition-all duration-200 ${
-      message.role === "user" ? "bg-slate-800/20" : ""
-    }`}>
+    <div className={`group flex gap-4 p-6 hover:bg-slate-800/30 transition-all duration-300 hover:scale-[1.01] ${
+      message.role === "user" ? "bg-slate-800/10" : ""
+    } animate-in fade-in-0 slide-in-from-bottom-4 duration-500`} style={{ animationDelay: `${index * 100}ms` }}>
       {/* Avatar */}
       <div className="flex-shrink-0">
         <Avatar className={`w-8 h-8 ${message.role === "assistant" ? "ring-2 ring-purple-500/50" : ""}`}>
