@@ -19,7 +19,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { BackButton } from "@/components/ui/back-button";
-import Footer from "@/components/footer";
 import {
   MessageSquare,
   Send,
