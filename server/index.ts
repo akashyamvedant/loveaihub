@@ -76,12 +76,21 @@ console.log("Starting LoveAIHub server...");
 
     // Setup Vite or static files
     console.log("Setting up file serving...");
-    if (app.get("env") === "development") {
+    if (setupVite && app.get("env") === "development") {
       await setupVite(app, server);
       console.log("✓ Vite setup complete");
-    } else {
+    } else if (serveStatic && app.get("env") !== "development") {
       serveStatic(app);
       console.log("✓ Static files setup complete");
+    } else {
+      console.log("✓ Running in API-only mode");
+      // Add a simple catch-all route for the frontend
+      app.get('*', (req, res) => {
+        if (req.path.startsWith('/api')) {
+          return res.status(404).json({ message: 'API endpoint not found' });
+        }
+        res.send('<html><body><h1>LoveAIHub API Server</h1><p>Server is running in API-only mode. Frontend not available.</p></body></html>');
+      });
     }
 
     // Start server
