@@ -155,10 +155,12 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
-      <BackButton />
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
+      <AppSidebar defaultCollapsed={true} />
+      <div className="flex-1 overflow-y-auto">
+        <BackButton />
 
-      <div className="pt-12 pb-12">
+        <div className="pt-12 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="mb-8">
@@ -644,6 +646,7 @@ export default function Admin() {
               </Card>
             </TabsContent>
           </Tabs>
+        </div>
         </div>
       </div>
 
