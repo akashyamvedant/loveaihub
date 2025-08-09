@@ -1,7 +1,6 @@
 import { useLocation } from "wouter";
 import { Button } from "./button";
-import { ArrowLeft, Home, Sparkles } from "lucide-react";
-import { motion } from "framer-motion";
+import { ArrowLeft, Home } from "lucide-react";
 
 interface BackButtonProps {
   label?: string;
