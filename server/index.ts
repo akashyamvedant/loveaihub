@@ -76,7 +76,10 @@ console.log("Starting LoveAIHub server...");
 
     // Setup Vite or static files
     console.log("Setting up file serving...");
-    if (setupVite && app.get("env") === "development") {
+    const isDevelopment = process.env.NODE_ENV === "development" || app.get("env") === "development";
+    console.log("Environment mode:", isDevelopment ? "development" : "production");
+
+    if (setupVite && isDevelopment) {
       await setupVite(app, server);
       console.log("✓ Vite setup complete");
     } else if (serveStatic && app.get("env") !== "development") {
