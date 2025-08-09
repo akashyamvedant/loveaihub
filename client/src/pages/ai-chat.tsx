@@ -1342,7 +1342,7 @@ export default function AiChat() {
       <ChatHistorySidebar />
 
       <div className={`${!isFullscreen ? "pt-20" : ""} h-screen flex flex-col transition-all duration-300 ${
-        showConversations ? "ml-80" : "ml-0"
+        showConversations ? "md:ml-80" : "ml-0"
       }`}>
         {/* Chat Header */}
         <div className="border-b border-slate-800/50 bg-gradient-to-r from-slate-900/80 via-slate-800/80 to-slate-900/80 backdrop-blur-xl">
