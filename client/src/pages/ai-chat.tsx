@@ -627,7 +627,9 @@ export default function AiChat() {
   // Conversation management
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
-  const [showConversations, setShowConversations] = useState(false);
+  const [showConversations, setShowConversations] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   
   // Settings
   const [temperature, setTemperature] = useState([0.7]);
