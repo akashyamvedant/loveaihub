@@ -14,7 +14,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { BackButton } from "@/components/ui/back-button";
-import Footer from "@/components/footer";
 import { 
   Mic, 
   Volume2, 
