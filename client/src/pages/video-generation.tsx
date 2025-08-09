@@ -322,7 +322,9 @@ export default function VideoGeneration() {
   const selectedQualityData = qualityOptions.find(q => q.id === selectedQuality);
 
   return (
-
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="glass-effect rounded-3xl p-8 backdrop-blur-xl border border-white/10 shadow-2xl">
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-4xl font-bold mb-4">
@@ -932,6 +934,7 @@ export default function VideoGeneration() {
             </TabsContent>
           </Tabs>
         </div>
+      </div>
     </div>
   );
 }

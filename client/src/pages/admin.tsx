@@ -640,6 +640,7 @@ export default function Admin() {
             </TabsContent>
           </Tabs>
         </div>
+      </div>
     </div>
   );
 }
