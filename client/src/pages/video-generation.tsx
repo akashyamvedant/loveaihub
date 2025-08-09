@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { BackButton } from "@/components/ui/back-button";
+import { AppSidebar } from "@/components/ui/app-sidebar";
 import {
   Video,
   Play,
@@ -323,10 +324,12 @@ export default function VideoGeneration() {
   const selectedQualityData = qualityOptions.find(q => q.id === selectedQuality);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
-      <BackButton />
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
+      <AppSidebar defaultCollapsed={true} />
+      <div className="flex-1 overflow-y-auto">
+        <BackButton />
 
-      <div className="pt-12 pb-12">
+        <div className="pt-12 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           {/* Header */}
@@ -937,6 +940,7 @@ export default function VideoGeneration() {
               </Card>
             </TabsContent>
           </Tabs>
+        </div>
         </div>
       </div>
 
