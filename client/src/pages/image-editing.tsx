@@ -183,9 +183,10 @@ export default function ImageEditing() {
     );
   }
 
-  const editGenerations = generations?.filter((g: any) => g.type === "image_edit") || [];
+  const editGenerations = (generations as any)?.filter((g: any) => g.type === "image_edit") || [];
 
   return (
+    <div className="min-h-screen bg-slate-900 p-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="mb-8">
@@ -462,6 +463,7 @@ export default function ImageEditing() {
             </div>
           </div>
         </div>
+      </div>
     </div>
   );
 }

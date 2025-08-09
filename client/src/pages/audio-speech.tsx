@@ -263,10 +263,11 @@ export default function AudioSpeech() {
     );
   }
 
-  const audioGenerations = generations?.filter((g: any) => g.type === "audio") || [];
-  const transcriptionGenerations = generations?.filter((g: any) => g.type === "transcription") || [];
+  const audioGenerations = (generations as any)?.filter((g: any) => g.type === "audio") || [];
+  const transcriptionGenerations = (generations as any)?.filter((g: any) => g.type === "transcription") || [];
 
   return (
+    <div className="min-h-screen bg-slate-900 p-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="mb-8">
@@ -645,19 +646,18 @@ export default function AudioSpeech() {
             </div>
           </div>
         </div>
+
+        {/* Hidden Audio Element */}
+        <audio
+          ref={audioRef}
+          onEnded={() => {
+            setIsPlaying(false);
+            setCurrentAudio(null);
+          }}
+          onPause={() => setIsPlaying(false)}
+          onPlay={() => setIsPlaying(true)}
+        />
       </div>
-
-      {/* Hidden Audio Element */}
-      <audio
-        ref={audioRef}
-        onEnded={() => {
-          setIsPlaying(false);
-          setCurrentAudio(null);
-        }}
-        onPause={() => setIsPlaying(false)}
-        onPlay={() => setIsPlaying(true)}
-      />
-
     </div>
   );
 }

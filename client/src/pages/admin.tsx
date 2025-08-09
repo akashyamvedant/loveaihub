@@ -154,6 +154,7 @@ export default function Admin() {
   }
 
   return (
+    <div className="min-h-screen bg-slate-900 p-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="mb-8">
@@ -175,7 +176,7 @@ export default function Admin() {
                     <Users className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold">{statsLoading ? "..." : stats?.totalUsers || 0}</div>
+                    <div className="text-2xl font-bold">{statsLoading ? "..." : (stats as any)?.totalUsers || 0}</div>
                     <div className="text-sm text-muted-foreground">Total Users</div>
                   </div>
                 </div>
@@ -189,7 +190,7 @@ export default function Admin() {
                     <Activity className="w-6 h-6 text-cyan-400" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold">{statsLoading ? "..." : stats?.totalGenerations || 0}</div>
+                    <div className="text-2xl font-bold">{statsLoading ? "..." : (stats as any)?.totalGenerations || 0}</div>
                     <div className="text-sm text-muted-foreground">Generations</div>
                   </div>
                 </div>
@@ -203,7 +204,7 @@ export default function Admin() {
                     <Crown className="w-6 h-6 text-emerald-400" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold">{statsLoading ? "..." : stats?.activeSubscriptions || 0}</div>
+                    <div className="text-2xl font-bold">{statsLoading ? "..." : (stats as any)?.activeSubscriptions || 0}</div>
                     <div className="text-sm text-muted-foreground">Premium Users</div>
                   </div>
                 </div>
@@ -276,7 +277,7 @@ export default function Admin() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {users?.map((user: any) => (
+                          {(users as any)?.map((user: any) => (
                             <TableRow key={user.id}>
                               <TableCell>
                                 <div className="flex items-center space-x-3">
@@ -524,7 +525,7 @@ export default function Admin() {
                       </div>
                     ) : (
                       <div className="space-y-4 max-h-[500px] overflow-y-auto">
-                        {blogPosts?.map((post: any) => (
+                        {(blogPosts as any)?.map((post: any) => (
                           <div key={post.id} className="p-4 glass-effect rounded-lg">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
@@ -640,7 +641,6 @@ export default function Admin() {
             </TabsContent>
           </Tabs>
         </div>
-      </div>
     </div>
   );
 }
