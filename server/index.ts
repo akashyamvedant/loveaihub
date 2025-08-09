@@ -63,16 +63,15 @@ console.log("Starting LoveAIHub server...");
       throw err;
     });
 
-    // Setup Vite or static files - temporarily disabled
+    // Setup Vite or static files
     console.log("Setting up file serving...");
-    // if (app.get("env") === "development") {
-    //   await setupVite(app, server);
-    //   console.log("✓ Vite setup complete");
-    // } else {
-    //   serveStatic(app);
-    //   console.log("✓ Static files setup complete");
-    // }
-    console.log("✓ File serving setup skipped (API only mode)");
+    if (app.get("env") === "development") {
+      await setupVite(app, server);
+      console.log("✓ Vite setup complete");
+    } else {
+      serveStatic(app);
+      console.log("✓ Static files setup complete");
+    }
 
     // Start server
     const port = parseInt(process.env.PORT || '5000', 10);
