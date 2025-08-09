@@ -15,7 +15,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { BackButton } from "@/components/ui/back-button";
-import Footer from "@/components/footer";
 import { 
   Shield, 
   Users, 
