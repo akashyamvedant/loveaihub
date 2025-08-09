@@ -737,8 +737,8 @@ export default function AiChat() {
         </div>
 
         {/* Message Input */}
-        <div className="border-t border-slate-800 bg-slate-900/50 backdrop-blur-sm">
-          <div className="max-w-4xl mx-auto p-4">
+        <div className="border-t border-slate-800/50 bg-gradient-to-r from-slate-900/80 via-slate-800/80 to-slate-900/80 backdrop-blur-xl">
+          <div className="max-w-4xl mx-auto p-6">
             <div className="relative">
               {/* Attached Files */}
               {attachedFiles.length > 0 && (
