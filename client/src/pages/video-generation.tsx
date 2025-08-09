@@ -940,7 +940,6 @@ export default function VideoGeneration() {
         </div>
       </div>
 
-      <Footer />
     </div>
   );
 }
