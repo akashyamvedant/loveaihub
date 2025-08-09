@@ -1752,7 +1752,6 @@ export default function AiChat() {
         </div>
       </div>
 
-      {!isFullscreen && <Footer />}
     </div>
   );
 }
