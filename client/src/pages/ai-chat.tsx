@@ -712,19 +712,22 @@ export default function AiChat() {
                 
                 {/* Typing Indicator */}
                 {isTyping && (
-                  <div className="flex gap-4 p-4">
-                    <Avatar className="w-8 h-8 ring-2 ring-purple-500/50">
-                      <AvatarFallback className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
-                        <Bot className="w-4 h-4" />
+                  <div className="flex gap-4 p-6 animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
+                    <Avatar className="w-10 h-10 ring-2 ring-purple-500/50 shadow-lg shadow-purple-500/25">
+                      <AvatarFallback className="bg-gradient-to-br from-purple-500 via-pink-500 to-purple-600 text-white shadow-inner">
+                        <Bot className="w-5 h-5" />
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex items-center gap-3 bg-slate-800/30 rounded-2xl px-4 py-3">
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                        <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="flex items-center gap-4 bg-gradient-to-r from-slate-800/40 to-slate-700/40 backdrop-blur-sm rounded-2xl px-6 py-4 border border-slate-700/50">
+                      <div className="flex space-x-1.5">
+                        <div className="w-2.5 h-2.5 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full animate-bounce shadow-sm"></div>
+                        <div className="w-2.5 h-2.5 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full animate-bounce shadow-sm" style={{ animationDelay: '0.15s' }}></div>
+                        <div className="w-2.5 h-2.5 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full animate-bounce shadow-sm" style={{ animationDelay: '0.3s' }}></div>
                       </div>
-                      <span className="text-sm text-slate-400">AI is thinking...</span>
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-purple-400 animate-pulse" />
+                        <span className="text-sm text-slate-300 font-medium">AI is crafting a response...</span>
+                      </div>
                     </div>
                   </div>
                 )}
