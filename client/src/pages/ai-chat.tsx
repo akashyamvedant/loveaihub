@@ -406,7 +406,7 @@ const chatModels = [
     category: "Efficient",
     description: "Compact Mistral model for efficient processing",
     capabilities: ["Efficient", "Fast responses", "Good quality"],
-    icon: "���️",
+    icon: "🌪️",
     color: "bg-red-400",
     tier: "standard"
   },
@@ -841,10 +841,149 @@ export default function AiChat() {
     }, 100);
   }, [selectedModel]);
 
+  // Initialize with sample conversations for demo
+  useEffect(() => {
+    const sampleConversations: Conversation[] = [
+      {
+        id: "conv-1",
+        title: "React Best Practices",
+        messages: [
+          {
+            id: "msg-1",
+            role: "user",
+            content: "What are the best practices for React development?",
+            timestamp: new Date(Date.now() - 86400000), // 1 day ago
+          },
+          {
+            id: "msg-2",
+            role: "assistant",
+            content: "Here are the key React best practices:\n\n1. **Component Organization**: Keep components small and focused\n2. **State Management**: Use useState for local state, Context for global\n3. **Performance**: Implement React.memo for expensive components\n4. **Error Boundaries**: Handle errors gracefully\n5. **Code Splitting**: Use lazy loading for better performance",
+            timestamp: new Date(Date.now() - 86400000),
+            model: selectedModel
+          }
+        ],
+        lastActivity: new Date(Date.now() - 86400000),
+        model: selectedModel,
+        pinned: true
+      },
+      {
+        id: "conv-2",
+        title: "AI Model Comparison",
+        messages: [
+          {
+            id: "msg-3",
+            role: "user",
+            content: "Compare GPT-4 vs Claude vs Gemini",
+            timestamp: new Date(Date.now() - 172800000), // 2 days ago
+          }
+        ],
+        lastActivity: new Date(Date.now() - 172800000),
+        model: "provider-6/gpt-4.1",
+        pinned: false
+      },
+      {
+        id: "conv-3",
+        title: "Python Data Science",
+        messages: [
+          {
+            id: "msg-4",
+            role: "user",
+            content: "How to get started with Python for data science?",
+            timestamp: new Date(Date.now() - 259200000), // 3 days ago
+          }
+        ],
+        lastActivity: new Date(Date.now() - 259200000),
+        model: "provider-2/deepseek-r1-0528",
+        pinned: false
+      }
+    ];
+    setConversations(sampleConversations);
+  }, [selectedModel]);
+
   const startNewConversation = () => {
+    const newConversation: Conversation = {
+      id: `conv-${Date.now()}`,
+      title: "New Chat",
+      messages: [],
+      lastActivity: new Date(),
+      model: selectedModel,
+      pinned: false
+    };
+
+    setConversations(prev => [newConversation, ...prev]);
+    setCurrentConversationId(newConversation.id);
     clearChat();
-    setCurrentConversationId(null);
   };
+
+  const saveCurrentConversation = useCallback(() => {
+    if (messages.length > 0 && currentConversationId) {
+      setConversations(prev => prev.map(conv =>
+        conv.id === currentConversationId
+          ? {
+              ...conv,
+              messages: [...messages],
+              lastActivity: new Date(),
+              title: messages[0]?.content.slice(0, 50) + "..." || "New Chat"
+            }
+          : conv
+      ));
+    }
+  }, [messages, currentConversationId]);
+
+  const loadConversation = (conversationId: string) => {
+    const conversation = conversations.find(c => c.id === conversationId);
+    if (conversation) {
+      setCurrentConversationId(conversationId);
+      setMessages(conversation.messages);
+      setSelectedModel(conversation.model);
+    }
+  };
+
+  const deleteConversation = (conversationId: string) => {
+    setConversations(prev => prev.filter(c => c.id !== conversationId));
+    if (currentConversationId === conversationId) {
+      startNewConversation();
+    }
+  };
+
+  const togglePinConversation = (conversationId: string) => {
+    setConversations(prev => prev.map(conv =>
+      conv.id === conversationId
+        ? { ...conv, pinned: !conv.pinned }
+        : conv
+    ));
+  };
+
+  const renameConversation = (conversationId: string, newTitle: string) => {
+    setConversations(prev => prev.map(conv =>
+      conv.id === conversationId
+        ? { ...conv, title: newTitle }
+        : conv
+    ));
+  };
+
+  // Auto-save conversation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (messages.length > 0) {
+        saveCurrentConversation();
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [messages, saveCurrentConversation]);
+
+  // Filter conversations based on search
+  const filteredConversations = conversations.filter(conv =>
+    conv.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    conv.messages.some(msg =>
+      msg.content.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  ).sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return b.lastActivity.getTime() - a.lastActivity.getTime();
+  });
 
   if (authLoading || !isAuthenticated) {
     return (
