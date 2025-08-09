@@ -14,8 +14,19 @@ console.log("Starting LoveAIHub server...");
     const { registerRoutes } = await import('./routes');
     console.log("✓ routes loaded");
     
-    const { setupVite, serveStatic, log } = await import('./vite');
-    console.log("✓ vite loaded");
+    let setupVite, serveStatic, log;
+    try {
+      const viteModule = await import('./vite');
+      setupVite = viteModule.setupVite;
+      serveStatic = viteModule.serveStatic;
+      log = viteModule.log;
+      console.log("✓ vite loaded");
+    } catch (viteError) {
+      console.warn("⚠️ Vite not available, running in API-only mode:", viteError.message);
+      setupVite = null;
+      serveStatic = null;
+      log = (message: string) => console.log(message);
+    }
 
     const app = express.default();
     app.use(express.default.json());
