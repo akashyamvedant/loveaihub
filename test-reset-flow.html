@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Password Reset Token Tester</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .debug { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .token-input { width: 100%; padding: 10px; margin: 10px 0; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Password Reset Token Tester</h1>
+        
+        <div class="debug">
+            <h3>Current URL Analysis:</h3>
+            <p><strong>Full URL:</strong> <span id="fullUrl"></span></p>
+            <p><strong>Hash:</strong> <span id="hash"></span></p>
+            <p><strong>Search:</strong> <span id="search"></span></p>
+        </div>
+
+        <div class="debug">
+            <h3>Token Extraction:</h3>
+            <p><strong>Access Token:</strong> <span id="accessToken"></span></p>
+            <p><strong>Token Type:</strong> <span id="tokenType"></span></p>
+            <p><strong>Token Length:</strong> <span id="tokenLength"></span></p>
+        </div>
+
+        <div>
+            <h3>Test Password Reset:</h3>
+            <input type="text" id="tokenInput" class="token-input" placeholder="Paste your reset token here (from email URL)">
+            <input type="password" id="passwordInput" class="token-input" placeholder="New password">
+            <button onclick="testPasswordReset()">Test Password Reset</button>
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // Auto-extract tokens on page load
+        function analyzeUrl() {
+            const fullUrl = window.location.href;
+            const hash = window.location.hash.substring(1);
+            const search = window.location.search.substring(1);
+            
+            document.getElementById('fullUrl').textContent = fullUrl;
+            document.getElementById('hash').textContent = hash || 'none';
+            document.getElementById('search').textContent = search || 'none';
+            
+            const hashParams = new URLSearchParams(hash);
+            const searchParams = new URLSearchParams(search);
+            
+            const accessToken = hashParams.get('access_token') || searchParams.get('access_token');
+            const type = hashParams.get('type') || searchParams.get('type');
+            
+            document.getElementById('accessToken').textContent = accessToken ? 
+                accessToken.substring(0, 50) + '...' : 'not found';
+            document.getElementById('tokenType').textContent = type || 'not found';
+            document.getElementById('tokenLength').textContent = accessToken ? 
+                accessToken.length : 'N/A';
+                
+            // Auto-fill token input if found
+            if (accessToken) {
+                document.getElementById('tokenInput').value = accessToken;
+            }
+        }
+        
+        async function testPasswordReset() {
+            const token = document.getElementById('tokenInput').value.trim();
+            const password = document.getElementById('passwordInput').value.trim();
+            const resultDiv = document.getElementById('result');
+            
+            if (!token || !password) {
+                resultDiv.innerHTML = '<div class="error">Please provide both token and password</div>';
+                return;
+            }
+            
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                const response = await fetch('/api/auth/update-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ password })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = '<div class="success">SUCCESS: ' + result.message + 
+                        ' (Method: ' + result.method + ')</div>';
+                } else {
+                    resultDiv.innerHTML = '<div class="error">ERROR: ' + result.message + 
+                        (result.debug ? ' (Debug: ' + result.debug + ')' : '') + '</div>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<div class="error">NETWORK ERROR: ' + error.message + '</div>';
+            }
+        }
+        
+        // Run analysis on page load
+        analyzeUrl();
+        
+        // Re-analyze if URL changes
+        window.addEventListener('hashchange', analyzeUrl);
+    </script>
+</body>
+</html>

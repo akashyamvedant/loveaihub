@@ -1,0 +1,65 @@
+🔍 OAuth Configuration Debug
+Error: No authorization code or access token received from Google OAuth
+Possible Causes:
+Supabase Redirect URLs: Check if https://www.loveaihub.com/auth/callback is configured
+Google OAuth Settings: Verify redirect URIs in Google Cloud Console
+Flow Type: Supabase might be using implicit flow instead of authorization code flow
+Debug Information:
+{
+  "timestamp": "2025-08-05T12:46:06.085Z",
+  "query": {},
+  "url": "/auth/callback",
+  "headers": {
+    "x-vercel-ip-postal-code": "700027",
+    "forwarded": "for=42.105.128.88;host=www.loveaihub.com;proto=https;sig=0QmVhcmVyIGQxY2QzM2VhMzUxNTdiNGVmNDAzNzBmNjdjYjgxNjc2YzA4MzNjNWU2Y2E1OWVmNGM3NDNiOGY4NTI0Y2U2NGE=;exp=1754398265",
+    "x-vercel-oidc-token": "eyJraWQiOiJtcmstNDMwMmVjMWI2NzBmNDhhOThhZDYxZGFkZTRhMjNiZTciLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3NTQzOTY1MzQsIm93bmVyX2lkIjoidGVhbV9xQXJHMFZxbVlFOFg0T2ZHbWJIOVRoMnoiLCJpYXQiOjE3NTQzOTY1MzQsInZlcmNlbF9pZCI6ImJvbTE6OmZ3bTdxLTE3NTQzOTY1MzM3NjMtMzllM2UyZDdkOWFhIiwiYXVkIjoiaHR0cHM6XC9cL3ZlcmNlbC5jb21cL2FrYXNoeWFtLXMtcHJvamVjdHMiLCJvd25lciI6ImFrYXNoeWFtLXMtcHJvamVjdHMiLCJpc3MiOiJodHRwczpcL1wvb2lkYy52ZXJjZWwuY29tXC9ha2FzaHlhbS1zLXByb2plY3RzIiwicHJvamVjdF9pZCI6InByal9qN3ZNaWNGOFd5WEF0M05JNVVsMnRhTktpZ1NNIiwiZXhwIjoxNzU0NDAwMTM0LCJlbnZpcm9ubWVudCI6InByb2R1Y3Rpb24iLCJzY29wZSI6Im93bmVyOmFrYXNoeWFtLXMtcHJvamVjdHM6cHJvamVjdDpsb3ZlYWlodWI6ZW52aXJvbm1lbnQ6cHJvZHVjdGlvbiIsInN1YiI6Im93bmVyOmFrYXNoeWFtLXMtcHJvamVjdHM6cHJvamVjdDpsb3ZlYWlodWI6ZW52aXJvbm1lbnQ6cHJvZHVjdGlvbiIsInByb2plY3QiOiJsb3ZlYWlodWIifQ.RL7txNBIJ64HK6VIJgVGtsUsjWIFhbzC0saHzvuhOvNz9gzUQwJ0lqDv6mX2SbSgNQg61p3HBBF8nW86BsUAncvYDAdISrl2iGTp52yJTQe_85PVttKkktbDJK1MIPgvkld_M0wUzAWOjltN4K2ASDNaykwkNtPR0NVIKfc6fT0NtxC-qITdCAG2rnLpWxIErXpdiDHkS801R-llpZz-Fy4ROp6psgeAA2wiyIv9W7RgouEfLjSsmJmQVr-qxWOPIJZfSreFaT765lQLUFY7b5UM8aX-bqNdmRAfGB8lNiyA-FHjnbsgAT1JTWO-2oWOwOS0oB1nWx4ouGkNqlztKQ",
+    "x-browser-year": "2025",
+    "x-vercel-ip-country-region": "WB",
+    "x-forwarded-for": "42.105.128.88",
+    "x-forwarded-proto": "https",
+    "x-vercel-internal-ingress-bucket": "bucket017",
+    "x-vercel-forwarded-for": "42.105.128.88",
+    "x-vercel-ip-continent": "AS",
+    "priority": "u=0, i",
+    "sec-fetch-site": "cross-site",
+    "x-vercel-internal-bot-check": "skip",
+    "sec-fetch-dest": "document",
+    "referer": "https://accounts.google.com/",
+    "x-vercel-ip-latitude": "22.5643",
+    "x-vercel-deployment-url": "loveaihub-kd39kq3u4-akashyam-s-projects.vercel.app",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "accept-language": "en-IN,en-GB;q=0.9,en-US;q=0.8,en;q=0.7,hi;q=0.6,ru;q=0.5",
+    "x-vercel-proxy-signature-ts": "1754398265",
+    "x-browser-validation": "6h3XF8YcD8syi2FF2BbuE2KllQo=",
+    "accept-encoding": "gzip, deflate, br, zstd",
+    "x-forwarded-host": "www.loveaihub.com",
+    "dnt": "1",
+    "x-browser-channel": "stable",
+    "x-vercel-ip-longitude": "88.3693",
+    "x-vercel-internal-ingress-port": "17443",
+    "x-vercel-ja4-digest": "t13d1517h2_8daaf6152771_b6f405a00624",
+    "sec-fetch-user": "?1",
+    "x-vercel-ip-country": "IN",
+    "x-vercel-ip-as-number": "38266",
+    "sec-ch-ua": "\"Not)A;Brand\";v=\"8\", \"Chromium\";v=\"138\", \"Google Chrome\";v=\"138\"",
+    "x-browser-copyright": "Copyright 2025 Google LLC. All rights reserved.",
+    "x-vercel-ip-timezone": "Asia/Kolkata",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+    "sec-ch-ua-platform": "\"Windows\"",
+    "x-vercel-id": "bom1::lf9fl-1754397965897-a17430f98eb3",
+    "upgrade-insecure-requests": "1",
+    "x-real-ip": "42.105.128.88",
+    "x-vercel-ip-city": "Kolkata",
+    "x-vercel-proxied-for": "42.105.128.88",
+    "host": "www.loveaihub.com",
+    "sec-fetch-mode": "navigate",
+    "sec-ch-ua-mobile": "?0",
+    "x-vercel-proxy-signature": "Bearer d1cd33ea35157b4ef40370f67cb81676c0833c5e6ca59ef4c743b8f8524ce64a",
+    "connection": "close"
+  },
+  "method": "GET"
+}
+Next Steps:
+Verify Supabase Authentication settings
+Check Google OAuth consent screen configuration
+Ensure redirect URLs exactly match
