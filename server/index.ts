@@ -82,7 +82,7 @@ console.log("Starting LoveAIHub server...");
     if (setupVite && isDevelopment) {
       await setupVite(app, server);
       console.log("✓ Vite setup complete");
-    } else if (serveStatic && app.get("env") !== "development") {
+    } else if (serveStatic && !isDevelopment) {
       serveStatic(app);
       console.log("✓ Static files setup complete");
     } else {
