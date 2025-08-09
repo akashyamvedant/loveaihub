@@ -469,7 +469,6 @@ export default function ImageEditing() {
         </div>
       </div>
 
-      <Footer />
     </div>
   );
 }
