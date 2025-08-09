@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import Navigation from "@/components/navigation";
+import { BackButton } from "@/components/ui/back-button";
 
 export default function Debug() {
   const [testResults, setTestResults] = useState<any[]>([]);
@@ -94,7 +94,7 @@ export default function Debug() {
       if (result.success) {
         toast({
           title: "Image Generation Test",
-          description: "✅ Image generation successful",
+          description: "��� Image generation successful",
         });
       } else {
         toast({
