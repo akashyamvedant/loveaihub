@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import Navigation from "@/components/navigation";
+import { BackButton } from "@/components/ui/back-button";
 import Footer from "@/components/footer";
 import { 
   Edit, 
