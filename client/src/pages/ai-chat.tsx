@@ -314,7 +314,7 @@ const chatModels = [
     category: "Exploration",
     description: "LLaMA optimized for exploration and discovery",
     capabilities: ["Exploration", "Discovery", "Research"],
-    icon: "����",
+    icon: "🔍",
     color: "bg-purple-400",
     tier: "standard"
   },
@@ -1336,14 +1336,21 @@ export default function AiChat() {
         <div className="absolute top-3/4 left-1/2 w-64 h-64 bg-pink-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
       </div>
 
-      {!isFullscreen && <Navigation />}
-      
+      {/* Back Button - positioned to work with sidebar */}
+      {!isFullscreen && (
+        <BackButton
+          className={`transition-all duration-300 ${
+            showConversations ? "md:left-[21rem]" : "left-6"
+          }`}
+        />
+      )}
+
       {/* Chat History Sidebar */}
       <ChatHistorySidebar />
 
-      <div className={`${!isFullscreen ? "pt-20" : ""} h-screen flex flex-col transition-all duration-300 ${
+      <div className={`h-screen flex flex-col transition-all duration-300 ${
         showConversations ? "md:ml-80" : "ml-0"
-      }`}>
+      } ${!isFullscreen ? "pt-16" : ""}`}>
         {/* Chat Header */}
         <div className="border-b border-slate-800/50 bg-gradient-to-r from-slate-900/80 via-slate-800/80 to-slate-900/80 backdrop-blur-xl">
           <div className="max-w-4xl mx-auto px-4 py-4">
