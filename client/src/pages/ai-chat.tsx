@@ -1418,20 +1418,83 @@ export default function AiChat() {
                           <SelectTrigger className="bg-slate-800 border-slate-700">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="bg-slate-800 border-slate-700">
-                            {chatModels.map((model) => (
-                              <SelectItem key={model.id} value={model.id} className="focus:bg-slate-700">
-                                <div className="flex items-center gap-3">
-                                  <span className="text-lg">{model.icon}</span>
-                                  <div>
-                                    <div className="font-medium">{model.name}</div>
-                                    <div className="text-xs text-slate-400">{model.description}</div>
-                                  </div>
+                          <SelectContent className="bg-slate-800 border-slate-700 max-h-96">
+                            {/* Group models by category */}
+                            {Object.entries(
+                              chatModels.reduce((groups, model) => {
+                                const category = model.category;
+                                if (!groups[category]) groups[category] = [];
+                                groups[category].push(model);
+                                return groups;
+                              }, {} as Record<string, typeof chatModels>)
+                            ).map(([category, models]) => (
+                              <div key={category}>
+                                <div className="px-2 py-1 text-xs font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-700">
+                                  {category}
                                 </div>
-                              </SelectItem>
+                                {models.map((model) => (
+                                  <SelectItem key={model.id} value={model.id} className="focus:bg-slate-700">
+                                    <div className="flex items-center gap-3 w-full">
+                                      <span className="text-lg">{model.icon}</span>
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-medium">{model.name}</span>
+                                          <Badge
+                                            variant="outline"
+                                            className={`text-xs h-4 px-1 ${
+                                              model.tier === 'premium' ? 'bg-yellow-500/20 text-yellow-400' :
+                                              model.tier === 'standard' ? 'bg-blue-500/20 text-blue-400' :
+                                              'bg-green-500/20 text-green-400'
+                                            }`}
+                                          >
+                                            {model.tier}
+                                          </Badge>
+                                        </div>
+                                        <div className="text-xs text-slate-400">{model.provider}</div>
+                                        <div className="text-xs text-slate-500 mt-1">{model.description}</div>
+                                        <div className="flex flex-wrap gap-1 mt-1">
+                                          {model.capabilities.slice(0, 2).map((cap, idx) => (
+                                            <span key={idx} className="text-xs bg-slate-700/50 px-1 rounded">
+                                              {cap}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </div>
                             ))}
                           </SelectContent>
                         </Select>
+
+                        {/* Current Model Info */}
+                        {currentModel && (
+                          <div className="bg-slate-800/50 rounded-lg p-3 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">{currentModel.icon}</span>
+                              <span className="font-medium">{currentModel.name}</span>
+                              <Badge
+                                variant="outline"
+                                className={`text-xs ${
+                                  currentModel.tier === 'premium' ? 'bg-yellow-500/20 text-yellow-400' :
+                                  currentModel.tier === 'standard' ? 'bg-blue-500/20 text-blue-400' :
+                                  'bg-green-500/20 text-green-400'
+                                }`}
+                              >
+                                {currentModel.tier}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-slate-400">{currentModel.description}</p>
+                            <div className="flex flex-wrap gap-1">
+                              {currentModel.capabilities.map((cap, idx) => (
+                                <Badge key={idx} variant="secondary" className="text-xs">
+                                  {cap}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* Temperature */}
