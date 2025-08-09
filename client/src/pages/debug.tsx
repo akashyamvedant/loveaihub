@@ -94,7 +94,7 @@ export default function Debug() {
       if (result.success) {
         toast({
           title: "Image Generation Test",
-          description: "��� Image generation successful",
+          description: "✅ Image generation successful",
         });
       } else {
         toast({
@@ -120,10 +120,10 @@ export default function Debug() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
-      <Navigation />
-      
-      <div className="pt-20 pb-12">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
+      <BackButton />
+
+      <div className="pt-12 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
             <h1 className="text-4xl font-bold mb-4">
