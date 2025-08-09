@@ -761,7 +761,7 @@ export default function AiChat() {
               )}
 
               {/* Input Area */}
-              <div className="relative flex items-end gap-3 bg-slate-800/50 rounded-2xl border border-slate-700 focus-within:border-purple-500/50 transition-all">
+              <div className="relative flex items-end gap-3 bg-gradient-to-r from-slate-800/60 via-slate-700/60 to-slate-800/60 backdrop-blur-xl rounded-2xl border border-slate-600/50 focus-within:border-purple-500/70 focus-within:shadow-lg focus-within:shadow-purple-500/20 transition-all duration-300">
                 <div className="flex-1 p-4">
                   <Textarea
                     ref={textareaRef}
