@@ -14,8 +14,11 @@ console.log("Starting LoveAIHub server...");
     const { registerRoutes } = await import('./routes');
     console.log("✓ routes loaded");
     
-    const { setupVite, serveStatic, log } = await import('./vite');
-    console.log("✓ vite loaded");
+    // const { setupVite, serveStatic, log } = await import('./vite');
+    // console.log("✓ vite loaded");
+
+    // Simple log function for now
+    const log = (message: string) => console.log(message);
 
     const app = express.default();
     app.use(express.default.json());
