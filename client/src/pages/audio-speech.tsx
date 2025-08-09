@@ -663,7 +663,6 @@ export default function AudioSpeech() {
         onPlay={() => setIsPlaying(true)}
       />
 
-      <Footer />
     </div>
   );
 }
