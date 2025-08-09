@@ -811,7 +811,7 @@ export default function AiChat() {
                   <Button
                     onClick={handleSendMessage}
                     disabled={chatMutation.isPending || (!currentMessage.trim() && attachedFiles.length === 0)}
-                    className="h-8 w-8 p-0 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="h-10 w-10 p-0 bg-gradient-to-r from-purple-500 via-violet-500 to-purple-600 hover:from-purple-600 hover:via-violet-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300 hover:scale-105 active:scale-95"
                   >
                     {chatMutation.isPending ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
