@@ -7,15 +7,15 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Menu, 
-  Sparkles, 
+import {
+  Menu,
+  Sparkles,
   Home,
-  Image, 
-  Video, 
-  MessageSquare, 
-  Mic, 
-  Edit, 
+  Image,
+  Video,
+  MessageSquare,
+  Mic,
+  Edit,
   Code,
   BookOpen,
   Settings,
@@ -31,7 +31,9 @@ import {
   TrendingUp,
   X,
   Maximize2,
-  Minimize2
+  Minimize2,
+  PanelLeftClose,
+  PanelLeftOpen
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
